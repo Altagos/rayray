@@ -4,6 +4,7 @@
     .minimum_zig_version = "0.12.0-dev.2631+3069669bc",
     .dependencies = .{
         // See `zig fetch --save <url>` for a command-line interface for adding dependencies.
+        .zmath = .{ .path = "libs/zmath" },
     },
     .paths = .{
         "",

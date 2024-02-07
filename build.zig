@@ -9,6 +9,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    add_deps(b, rayray);
 
     const exe = b.addExecutable(.{
         .name = "rayray",
@@ -39,4 +40,11 @@ pub fn build(b: *std.Build) void {
     const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_lib_unit_tests.step);
+}
+
+fn add_deps(b: *std.Build, module: *std.Build.Module) void {
+    const zmath_pkg = b.dependency("zmath", .{
+        .enable_cross_platform_determinism = true,
+    });
+    module.addImport("zmath", zmath_pkg.module("zmath"));
 }
