@@ -4,14 +4,19 @@
     .minimum_zig_version = "0.12.0-dev.2631+3069669bc",
     .dependencies = .{
         // See `zig fetch --save <url>` for a command-line interface for adding dependencies.
+        .zigimg = .{
+            .url = "https://github.com/zigimg/zigimg/archive/2224f91ea4cf70f2254848657e308761b8cc8c5d.tar.gz",
+            // dumy hash, because zigimg does not contain a build.zig. zon
+            .hash = "122029f65edf3965d86f7d0741fe141bcc1d68b1f013fa7280bbfda4e87c6affc15f",
+        },
+
+        // libs folder
         .zmath = .{ .path = "libs/zmath" },
     },
     .paths = .{
-        "",
-        // For example...
-        //"build.zig",
-        //"build.zig.zon",
-        //"src",
+        "build.zig",
+        "build.zig.zon",
+        "src",
         //"LICENSE",
         //"README.md",
     },
