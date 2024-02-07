@@ -3,8 +3,12 @@ const std = @import("std");
 pub const Raytracer = struct {
     const Self = @This();
 
-    pub fn init() Self {
-        return .{};
+    allocator: std.mem.Allocator,
+
+    pub fn init(allocator: std.mem.Allocator) Self {
+        return .{
+            .allocator = allocator,
+        };
     }
 
     pub fn deinit(self: *const Self) void {
@@ -15,3 +19,5 @@ pub const Raytracer = struct {
         _ = self;
     }
 };
+
+pub const Camera = struct {};
