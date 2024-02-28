@@ -4,11 +4,18 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    const enable_spall = b.option(bool, "enable_spall", "Enable spall profiling") orelse false;
+    const spall = b.dependency("spall", .{
+        .enable = enable_spall,
+    });
+
     const rayray = b.addModule("rayray", .{
         .root_source_file = .{ .path = "src/rayray.zig" },
         .target = target,
         .optimize = optimize,
     });
+    rayray.addImport("spall", spall.module("spall"));
+
     addDeps(b, rayray);
 
     const exe = b.addExecutable(.{
@@ -17,7 +24,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-
+    exe.root_module.addImport("spall", spall.module("spall"));
     exe.root_module.addImport("rayray", rayray);
 
     b.installArtifact(exe);
