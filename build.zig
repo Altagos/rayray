@@ -27,6 +27,14 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addImport("spall", spall.module("spall"));
     exe.root_module.addImport("rayray", rayray);
 
+    const alib = b.dependency("a", .{
+        .target = target,
+        .optimize = optimize,
+        .log_ignore_default = true,
+    });
+
+    exe.root_module.addImport("a", alib.module("a"));
+
     b.installArtifact(exe);
 
     const run_cmd = b.addRunArtifact(exe);

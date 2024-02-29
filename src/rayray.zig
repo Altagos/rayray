@@ -4,6 +4,8 @@ const spall = @import("spall");
 const zigimg = @import("zigimg");
 const color = zigimg.color;
 
+const log = std.log.scoped(.rayray);
+
 pub const Raytracer = struct {
     const Self = @This();
 
@@ -22,8 +24,9 @@ pub const Raytracer = struct {
         _ = self;
     }
 
+    // TODO: Render in cubes not in rows
     pub fn render(self: *Self) !zigimg.Image {
-        const s = spall.trace(@src(), "render", .{});
+        const s = spall.trace(@src(), "Render", .{});
         defer s.end();
 
         const rows: usize = try std.Thread.getCpuCount();
@@ -34,7 +37,8 @@ pub const Raytracer = struct {
             }
             break :blk rows + 1;
         };
-        std.debug.print("rows: {}, row_height: {}, num_threads: {}", .{ rows, row_height, num_threads });
+
+        log.debug("rows: {}, row_height: {}, num_threads: {}", .{ rows, row_height, num_threads });
 
         const threads = try self.allocator.alloc(std.Thread, num_threads);
         defer self.allocator.free(threads);
@@ -51,34 +55,32 @@ pub const Raytracer = struct {
         return self.camera.image;
     }
 
-    fn r(camera: *Camera, row: usize, height: usize) void {
+    fn r(cam: *Camera, row: usize, height: usize) void {
         spall.init_thread();
         defer spall.deinit_thread();
 
-        const s = spall.trace(@src(), "thread {}", .{row});
+        const s = spall.trace(@src(), "Render Thread {}", .{row});
         defer s.end();
 
         for (0..height) |iy| {
             const y = iy + height * row;
-            if (y >= camera.height) break;
+            if (y >= cam.height) break;
 
-            for (0..camera.width) |x| {
-                @setRuntimeSafety(false);
-                if (iy <= height - 5) {
-                    camera.setPixel(x, y, color.Rgba32.initRgba(
-                        @intCast(x),
-                        @intCast(y),
-                        0,
-                        255,
-                    )) catch break;
-                } else {
-                    camera.setPixel(x, y, color.Rgba32.initRgba(
-                        0,
-                        0,
-                        255,
-                        255,
-                    )) catch break;
-                }
+            for (0..cam.width) |x| {
+                const col = blk: {
+                    if (iy <= height - 5) {
+                        @setRuntimeSafety(false);
+                        break :blk color.Rgba32.initRgba(
+                            @intCast(x),
+                            @intCast(y),
+                            0,
+                            255,
+                        );
+                    }
+                    break :blk color.Rgba32.initRgba(0, 0, 255, 255);
+                };
+
+                cam.setPixel(x, y, col) catch break;
             }
         }
     }

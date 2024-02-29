@@ -1,8 +1,14 @@
 const std = @import("std");
 
+const a = @import("a");
 const spall = @import("spall");
 
 const Raytracer = @import("rayray").Raytracer;
+
+pub const std_options = .{
+    .log_level = .debug,
+    .logFn = a.log.logFn,
+};
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -21,7 +27,12 @@ pub fn main() !void {
     defer raytracer.deinit();
 
     const img = try raytracer.render();
+    std.log.info("Image rendered", .{});
 
     s.end();
+
+    const s_saving = spall.trace(@src(), "Write Image", .{});
+    defer s_saving.end();
     try img.writeToFilePath("./out/out.png", .{ .png = .{} });
+    std.log.info("Image saved to: out/out.ong", .{});
 }

@@ -4,6 +4,10 @@
     .minimum_zig_version = "0.12.0-dev.2631+3069669bc",
     .dependencies = .{
         // See `zig fetch --save <url>` for a command-line interface for adding dependencies.
+        .a = .{
+            .url = "https://git.sr.ht/~altagos/a/archive/790275535ae4ea236406dc198413c4d4f31919e7.tar.gz",
+            .hash = "12204b052e9dda5b17e6271afcf4bf0112d4f5012b73201cec4fbb6cc85e1d400ec5",
+        },
         .zigimg = .{
             .url = "https://github.com/rockorager/zigimg/archive/19a49a7e44fb4b1c22341dfbd6566019de742055.tar.gz",
             .hash = "1220ebfa8587cfd644995fc08e218dbb3ebd7344fb8e129ff02bc5a6d52a2325370d",
