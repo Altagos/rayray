@@ -2,6 +2,7 @@ const std = @import("std");
 
 const zm = @import("zmath");
 
+const IntervalF32 = @import("interval.zig").IntervalF32;
 const Ray = @import("ray.zig");
 pub const Sphere = @import("hittable/sphere.zig");
 
@@ -28,10 +29,10 @@ pub const Hittable = union(HittableType) {
         return .{ .sphere = sphere };
     }
 
-    pub fn hit(self: *Hittable, r: *Ray, ray_tmin: f32, ray_tmax: f32) ?HitRecord {
+    pub fn hit(self: *Hittable, r: *Ray, ray_t: IntervalF32) ?HitRecord {
         switch (self.*) {
             .sphere => |*sphere| {
-                return sphere.hit(r, ray_tmin, ray_tmax);
+                return sphere.hit(r, ray_t);
             },
         }
 
@@ -56,13 +57,13 @@ pub const HittableList = struct {
         try self.list.append(item);
     }
 
-    pub fn hit(self: *HittableList, r: *Ray, ray_tmin: f32, ray_tmax: f32) ?HitRecord {
+    pub fn hit(self: *HittableList, r: *Ray, ray_t: IntervalF32) ?HitRecord {
         var rec: ?HitRecord = null;
         var hit_anything = false;
-        var closest_so_far = ray_tmax;
+        var closest_so_far = ray_t.max;
 
         for (self.list.items) |*object| {
-            if (object.hit(r, ray_tmin, closest_so_far)) |new_rec| {
+            if (object.hit(r, IntervalF32.init(ray_t.min, closest_so_far))) |new_rec| {
                 rec = new_rec;
                 hit_anything = true;
                 closest_so_far = new_rec.t;
