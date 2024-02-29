@@ -60,8 +60,8 @@ pub const Raytracer = struct {
         const finished_threads = try self.allocator.alloc(bool, num_threads);
 
         for (0..num_threads) |row| {
-            const ctx = renderer.Context{ .cam = &self.camera, .world = &self.world, .done = &threads[row].done };
-            const t = try std.Thread.spawn(.{}, renderer.renderThread, .{ ctx, row, row_height });
+            const ctx = renderer.Context{ .cam = &self.camera, .world = &self.world };
+            const t = try std.Thread.spawn(.{}, renderer.renderThread, .{ ctx, &threads[row].done, row, row_height });
             threads[row].thread = t;
         }
 

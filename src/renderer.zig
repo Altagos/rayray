@@ -17,7 +17,6 @@ const log = std.log.scoped(.renderer);
 pub const Context = struct {
     cam: *Camera,
     world: *hittable.HittableList,
-    done: *std.atomic.Value(bool),
 };
 
 pub fn rayColor(r: *Ray, world: *hittable.HittableList) zm.Vec {
@@ -30,7 +29,7 @@ pub fn rayColor(r: *Ray, world: *hittable.HittableList) zm.Vec {
     return zm.f32x4s(1.0 - a) * zm.f32x4s(1.0) + zm.f32x4s(a) * zm.f32x4(0.5, 0.7, 1.0, 1.0);
 }
 
-pub fn render(ctx: Context, height: IntervalUsize, width: IntervalUsize) void {
+pub fn run(ctx: Context, height: IntervalUsize, width: IntervalUsize) void {
     var height_iter = height.iter();
     height_iter.upper_boundry = .inclusive;
 
@@ -51,11 +50,9 @@ pub fn render(ctx: Context, height: IntervalUsize, width: IntervalUsize) void {
             ctx.cam.setPixel(i, j, col) catch break;
         }
     }
-
-    ctx.done.store(true, .Release);
 }
 
-pub fn renderThread(ctx: Context, row: usize, row_height: usize) void {
+pub fn renderThread(ctx: Context, done: *std.atomic.Value(bool), row: usize, row_height: usize) void {
     spall.init_thread();
     defer spall.deinit_thread();
 
@@ -67,7 +64,9 @@ pub fn renderThread(ctx: Context, row: usize, row_height: usize) void {
     const s = spall.trace(@src(), "Render Thread {}", .{row});
     defer s.end();
 
-    render(ctx, height, width);
+    run(ctx, height, width);
+
+    done.store(true, .Release);
 }
 
 fn vecToRgba(v: zm.Vec) color.Rgba32 {
