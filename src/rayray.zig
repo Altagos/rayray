@@ -3,6 +3,10 @@ const std = @import("std");
 const spall = @import("spall");
 const zigimg = @import("zigimg");
 const color = zigimg.color;
+const zm = @import("zmath");
+
+const Camera = @import("camera.zig");
+const Ray = @import("ray.zig");
 
 const log = std.log.scoped(.rayray);
 
@@ -16,7 +20,7 @@ pub const Raytracer = struct {
     pub fn init(allocator: std.mem.Allocator) !Self {
         return .{
             .allocator = allocator,
-            .camera = try Camera.init(allocator, 256 * 10, 256 * 10),
+            .camera = try Camera.init(allocator, 400, 16.0 / 9.0),
         };
     }
 
@@ -30,9 +34,9 @@ pub const Raytracer = struct {
         defer s.end();
 
         const rows: usize = try std.Thread.getCpuCount();
-        const row_height = @divTrunc(self.camera.height, rows);
+        const row_height = @divTrunc(self.camera.image_height, rows);
         const num_threads = blk: {
-            if (self.camera.height % rows == 0) {
+            if (self.camera.image_height % rows == 0) {
                 break :blk rows;
             }
             break :blk rows + 1;
@@ -44,7 +48,7 @@ pub const Raytracer = struct {
         defer self.allocator.free(threads);
 
         for (0..num_threads) |row| {
-            const t = try std.Thread.spawn(.{}, r, .{ &self.camera, row, row_height });
+            const t = try std.Thread.spawn(.{}, render_thread, .{ &self.camera, row, row_height });
             threads[row] = t;
         }
 
@@ -55,55 +59,34 @@ pub const Raytracer = struct {
         return self.camera.image;
     }
 
-    fn r(cam: *Camera, row: usize, height: usize) void {
+    fn render_thread(cam: *Camera, row: usize, height: usize) void {
         spall.init_thread();
         defer spall.deinit_thread();
 
         const s = spall.trace(@src(), "Render Thread {}", .{row});
         defer s.end();
 
-        for (0..height) |iy| {
-            const y = iy + height * row;
-            if (y >= cam.height) break;
+        for (0..height) |ij| {
+            const j = ij + height * row;
+            if (j >= cam.image_height) break;
 
-            for (0..cam.width) |x| {
-                const col = blk: {
-                    if (iy <= height - 5) {
-                        @setRuntimeSafety(false);
-                        break :blk color.Rgba32.initRgba(
-                            @intCast(x),
-                            @intCast(y),
-                            0,
-                            255,
-                        );
-                    }
-                    break :blk color.Rgba32.initRgba(0, 0, 255, 255);
-                };
+            for (0..cam.image_width) |i| {
+                const pixel_center = cam.pixel00_loc + (zm.f32x4s(@as(f32, @floatFromInt(i))) * cam.pixel_delta_u) + (zm.f32x4s(@as(f32, @floatFromInt(j))) * cam.pixel_delta_v);
+                const ray_direction = pixel_center - cam.camera_center;
+                var ray = Ray.init(cam.camera_center, ray_direction);
+                const col = vecToRgba(ray.color());
 
-                cam.setPixel(x, y, col) catch break;
+                cam.setPixel(i, j, col) catch break;
             }
         }
     }
 };
 
-pub const Camera = struct {
-    width: usize,
-    height: usize,
-    image: zigimg.Image,
+fn vecToRgba(v: zm.Vec) color.Rgba32 {
+    const r: u8 = @intFromFloat(255.999 * v[0]);
+    const g: u8 = @intFromFloat(255.999 * v[1]);
+    const b: u8 = @intFromFloat(255.999 * v[2]);
+    const a: u8 = @intFromFloat(255.999 * v[3]);
 
-    pub fn init(allocator: std.mem.Allocator, width: usize, height: usize) !Camera {
-        const img = try zigimg.Image.create(allocator, width, height, zigimg.PixelFormat.rgba32);
-
-        return Camera{
-            .width = width,
-            .height = height,
-            .image = img,
-        };
-    }
-
-    pub fn setPixel(self: *Camera, x: usize, y: usize, c: color.Rgba32) !void {
-        if (x >= self.width or y >= self.height) return error.OutOfBounds;
-        const i = x + self.width * y;
-        self.image.pixels.rgba32[i] = c;
-    }
-};
+    return color.Rgba32.initRgba(r, g, b, a);
+}
