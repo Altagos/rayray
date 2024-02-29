@@ -33,7 +33,7 @@ pub const Raytracer = struct {
         const s = spall.trace(@src(), "Render", .{});
         defer s.end();
 
-        const rows: usize = try std.Thread.getCpuCount();
+        const rows: usize = try std.Thread.getCpuCount() - 1;
         const row_height = @divTrunc(self.camera.image_height, rows);
         const num_threads = blk: {
             if (self.camera.image_height % rows == 0) {
@@ -44,24 +44,52 @@ pub const Raytracer = struct {
 
         log.debug("rows: {}, row_height: {}, num_threads: {}", .{ rows, row_height, num_threads });
 
-        const threads = try self.allocator.alloc(std.Thread, num_threads);
+        var threads = try self.allocator.alloc(TaskTracker, num_threads);
         defer self.allocator.free(threads);
 
+        const finished_threads = try self.allocator.alloc(bool, num_threads);
+
         for (0..num_threads) |row| {
-            const t = try std.Thread.spawn(.{}, render_thread, .{ &self.camera, row, row_height });
-            threads[row] = t;
+            const t = try std.Thread.spawn(.{}, render_thread, .{ &self.camera, row, row_height, &threads[row].done });
+            threads[row].thread = t;
         }
 
-        for (threads) |t| {
-            t.join();
+        const stderr = std.io.getStdErr();
+        defer stderr.close();
+
+        var progress = std.Progress{
+            .terminal = stderr,
+            .supports_ansi_escape_codes = true,
+        };
+        var node = progress.start("Rendering Completed", num_threads);
+        node.activate();
+
+        while (true) {
+            var done = true;
+            node.activate();
+
+            for (0..num_threads) |id| {
+                if (threads[id].done and !threads[id].marked_as_done) {
+                    threads[id].thread.join();
+                    threads[id].marked_as_done = true;
+                    finished_threads[id] = true;
+                    node.completeOne();
+                } else if (!threads[id].done) {
+                    done = false;
+                }
+            }
+
+            if (done) break;
         }
 
         return self.camera.image;
     }
 
-    fn render_thread(cam: *Camera, row: usize, height: usize) void {
+    fn render_thread(cam: *Camera, row: usize, height: usize, done: *bool) void {
         spall.init_thread();
         defer spall.deinit_thread();
+
+        log.debug("Started Render Thread {}", .{row});
 
         const s = spall.trace(@src(), "Render Thread {}", .{row});
         defer s.end();
@@ -79,7 +107,17 @@ pub const Raytracer = struct {
                 cam.setPixel(i, j, col) catch break;
             }
         }
+
+        done.* = true;
+
+        // log.debug("Render Thread {} is done", .{row});
     }
+};
+
+const TaskTracker = struct {
+    thread: std.Thread,
+    done: bool = false,
+    marked_as_done: bool = false,
 };
 
 fn vecToRgba(v: zm.Vec) color.Rgba32 {
