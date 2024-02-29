@@ -72,6 +72,10 @@ pub fn init(allocator: std.mem.Allocator, image_width: usize, aspect_ratio: f32)
     };
 }
 
+pub fn deinit(self: *Camera) void {
+    self.image.deinit();
+}
+
 pub fn setPixel(self: *Camera, x: usize, y: usize, c: color.Rgba32) !void {
     if (x >= self.image_width or y >= self.image_height) return error.OutOfBounds;
     const i = x + self.image_width * y;

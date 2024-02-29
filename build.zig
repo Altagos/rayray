@@ -24,6 +24,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    addDeps(b, &exe.root_module);
     exe.root_module.addImport("spall", spall.module("spall"));
     exe.root_module.addImport("rayray", rayray);
 

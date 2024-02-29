@@ -2,8 +2,12 @@ const std = @import("std");
 
 const a = @import("a");
 const spall = @import("spall");
+const zm = @import("zmath");
 
-const Raytracer = @import("rayray").Raytracer;
+const rayray = @import("rayray");
+const Hittable = rayray.hittable.Hittable;
+const HittableList = rayray.hittable.HittableList;
+const Sphere = rayray.hittable.Sphere;
 
 pub const std_options = .{
     .log_level = .debug,
@@ -21,9 +25,13 @@ pub fn main() !void {
     spall.init_thread();
     defer spall.deinit_thread();
 
+    var world = HittableList.init(allocator);
+    try world.add(Hittable.initSphere(Sphere{ .center = zm.f32x4(0, 0, -1, 0), .radius = 0.5 }));
+    try world.add(Hittable.initSphere(Sphere{ .center = zm.f32x4(0, -100.5, -1, 0), .radius = 100 }));
+
     const s = spall.trace(@src(), "Main", .{});
 
-    var raytracer = try Raytracer.init(allocator);
+    var raytracer = try rayray.Raytracer.init(allocator, world);
     defer raytracer.deinit();
 
     const img = try raytracer.render();

@@ -1,5 +1,8 @@
+const std = @import("std");
+
 const zm = @import("zmath");
 
+const hittable = @import("hittable.zig");
 const Ray = @This();
 
 orig: zm.Vec,
@@ -16,11 +19,9 @@ pub fn at(self: *Ray, t: f32) zm.Vec {
     return self.orig + zm.f32x4s(t) * self.dir;
 }
 
-pub fn color(r: *Ray) zm.Vec {
-    const t = hitSphere(zm.f32x4(0, 0, -1, 0), 0.5, r);
-    if (t > 0.0) {
-        const N = zm.normalize3(r.at(t) - zm.f32x4(0, 0, -1, 0));
-        return zm.f32x4s(0.5) * zm.f32x4(N[0] + 1, N[1] + 1, N[2] + 1, 1);
+pub fn color(r: *Ray, world: *hittable.HittableList) zm.Vec {
+    if (world.hit(r, 0, std.math.inf(f32))) |rec| {
+        return zm.f32x4s(0.5) * (rec.normal + zm.f32x4(1, 1, 1, 1));
     }
 
     const unit_direction = zm.normalize3(r.dir);

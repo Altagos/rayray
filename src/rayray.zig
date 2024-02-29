@@ -6,6 +6,7 @@ const color = zigimg.color;
 const zm = @import("zmath");
 
 const Camera = @import("camera.zig");
+pub const hittable = @import("hittable.zig");
 const Ray = @import("ray.zig");
 
 const log = std.log.scoped(.rayray);
@@ -16,16 +17,19 @@ pub const Raytracer = struct {
     allocator: std.mem.Allocator,
 
     camera: Camera,
+    world: hittable.HittableList,
 
-    pub fn init(allocator: std.mem.Allocator) !Self {
+    pub fn init(allocator: std.mem.Allocator, world: hittable.HittableList) !Self {
         return .{
             .allocator = allocator,
             .camera = try Camera.init(allocator, 400, 16.0 / 9.0),
+            .world = world,
         };
     }
 
-    pub fn deinit(self: *const Self) void {
-        _ = self;
+    pub fn deinit(self: *Self) void {
+        self.camera.deinit();
+        self.world.deinit();
     }
 
     // TODO: Render in cubes not in rows
@@ -50,7 +54,7 @@ pub const Raytracer = struct {
         const finished_threads = try self.allocator.alloc(bool, num_threads);
 
         for (0..num_threads) |row| {
-            const t = try std.Thread.spawn(.{}, render_thread, .{ &self.camera, row, row_height, &threads[row].done });
+            const t = try std.Thread.spawn(.{}, render_thread, .{ &self.camera, &self.world, row, row_height, &threads[row].done });
             threads[row].thread = t;
         }
 
@@ -85,7 +89,7 @@ pub const Raytracer = struct {
         return self.camera.image;
     }
 
-    fn render_thread(cam: *Camera, row: usize, height: usize, done: *bool) void {
+    fn render_thread(cam: *Camera, world: *hittable.HittableList, row: usize, height: usize, done: *bool) void {
         spall.init_thread();
         defer spall.deinit_thread();
 
@@ -102,7 +106,7 @@ pub const Raytracer = struct {
                 const pixel_center = cam.pixel00_loc + (zm.f32x4s(@as(f32, @floatFromInt(i))) * cam.pixel_delta_u) + (zm.f32x4s(@as(f32, @floatFromInt(j))) * cam.pixel_delta_v);
                 const ray_direction = pixel_center - cam.camera_center;
                 var ray = Ray.init(cam.camera_center, ray_direction);
-                const col = vecToRgba(ray.color());
+                const col = vecToRgba(ray.color(world));
 
                 cam.setPixel(i, j, col) catch break;
             }
