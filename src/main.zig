@@ -33,7 +33,7 @@ pub fn main() !void {
     const s = spall.trace(@src(), "Raytracer", .{});
 
     // Raytracing part
-    var raytracer = try rayray.Raytracer.init(allocator, world, .{ .aspect_ratio = 16.0 / 9.0, .image_width = 400 });
+    var raytracer = try rayray.Raytracer.init(allocator, world, .{ .aspect_ratio = 16.0 / 9.0, .image_width = 400, .samples_per_pixel = 100 });
     defer raytracer.deinit();
 
     const img = try raytracer.render();

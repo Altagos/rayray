@@ -1,8 +1,11 @@
 const std = @import("std");
+const random = std.crypto.random;
 
 const zigimg = @import("zigimg");
 const color = zigimg.color;
 const zm = @import("zmath");
+
+pub const Ray = @import("ray.zig");
 
 const log = std.log.scoped(.camera);
 
@@ -11,11 +14,13 @@ const Camera = @This();
 pub const Options = struct {
     image_width: usize,
     aspect_ratio: f32,
+    samples_per_pixel: usize,
 };
 
 image_height: usize,
 image_width: usize,
 aspect_ratio: f32,
+samples_per_pixel: usize,
 
 focal_lenght: f32,
 viewport_height: f32,
@@ -61,6 +66,7 @@ pub fn init(allocator: std.mem.Allocator, opts: Options) !Camera {
         .image_width = image_width,
         .image_height = image_height,
         .aspect_ratio = aspect_ratio,
+        .samples_per_pixel = opts.samples_per_pixel,
 
         .focal_lenght = focal_lenght,
         .viewport_height = viewport_height,
@@ -83,8 +89,22 @@ pub fn deinit(self: *Camera) void {
     self.image.deinit();
 }
 
+pub fn getRay(self: *Camera, i: usize, j: usize) Ray {
+    const pixel_center = self.pixel00_loc + (zm.f32x4s(@as(f32, @floatFromInt(i))) * self.pixel_delta_u) + (zm.f32x4s(@as(f32, @floatFromInt(j))) * self.pixel_delta_v);
+    const pixel_sample = pixel_center + self.pixelSamplesSq();
+
+    const ray_direction = pixel_sample - self.camera_center;
+    return Ray.init(self.camera_center, ray_direction);
+}
+
 pub fn setPixel(self: *Camera, x: usize, y: usize, c: color.Rgba32) !void {
     if (x >= self.image_width or y >= self.image_height) return error.OutOfBounds;
     const i = x + self.image_width * y;
     self.image.pixels.rgba32[i] = c;
+}
+
+fn pixelSamplesSq(self: *Camera) zm.Vec {
+    const px = zm.f32x4s(-0.5 + random.float(f32));
+    const py = zm.f32x4s(-0.5 + random.float(f32));
+    return (px * self.pixel_delta_u) + (py * self.pixel_delta_v);
 }

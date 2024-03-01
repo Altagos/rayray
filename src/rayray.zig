@@ -64,15 +64,14 @@ pub const Raytracer = struct {
             threads[row].thread = t;
         }
 
-        // const stderr = std.io.getStdErr();
-        // // defer stderr.close();
+        const stderr = std.io.getStdErr();
 
-        // var progress = std.Progress{
-        //     .terminal = stderr,
-        //     .supports_ansi_escape_codes = true,
-        // };
-        // var node = progress.start("Rendering Completed", num_threads);
-        // node.activate();
+        var progress = std.Progress{
+            .terminal = stderr,
+            .supports_ansi_escape_codes = true,
+        };
+        var node = progress.start("Rendering Completed", num_threads);
+        node.activate();
 
         while (true) {
             var done = true;
@@ -93,7 +92,7 @@ pub const Raytracer = struct {
             if (done) break;
         }
 
-        // node.end();
+        node.end();
 
         return self.camera.image;
     }

@@ -81,6 +81,12 @@ pub fn Interval(comptime T: type) type {
                 return self.min < x and x < self.max;
             }
 
+            pub fn clamp(self: *const Self, x: T) T {
+                if (x < self.min) return self.min;
+                if (x > self.max) return self.max;
+                return x;
+            }
+
             pub fn iter(self: *const Self) Iterator {
                 return Iterator{
                     .interval = self.*,
@@ -108,6 +114,12 @@ pub fn Interval(comptime T: type) type {
 
             pub fn surrounds(self: *const Self, x: T) bool {
                 return self.min < x and x < self.max;
+            }
+
+            pub fn clamp(self: *const Self, x: T) T {
+                if (x < self.min) return self.min;
+                if (x > self.max) return self.max;
+                return x;
             }
         };
     } else {

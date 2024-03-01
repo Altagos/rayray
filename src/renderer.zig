@@ -36,12 +36,13 @@ pub fn run(ctx: Context, height: IntervalUsize, width: IntervalUsize) void {
 
         var width_iter = width.iter();
         while (width_iter.nextExc()) |i| {
-            const pixel_center = ctx.cam.pixel00_loc + (zm.f32x4s(@as(f32, @floatFromInt(i))) * ctx.cam.pixel_delta_u) + (zm.f32x4s(@as(f32, @floatFromInt(j))) * ctx.cam.pixel_delta_v);
-            const ray_direction = pixel_center - ctx.cam.camera_center;
-            var ray = Ray.init(ctx.cam.camera_center, ray_direction);
-            const col = vecToRgba(rayColor(&ray, ctx.world));
+            var col = zm.f32x4(0.0, 0.0, 0.0, 1.0);
+            for (0..ctx.cam.samples_per_pixel) |_| {
+                var ray = ctx.cam.getRay(i, j);
+                col += rayColor(&ray, ctx.world);
+            }
 
-            ctx.cam.setPixel(i, j, col) catch break;
+            ctx.cam.setPixel(i, j, vecToRgba(col, ctx.cam.samples_per_pixel)) catch break;
         }
     }
 }
@@ -63,11 +64,19 @@ pub fn renderThread(ctx: Context, done: *std.atomic.Value(bool), row: usize, row
     done.store(true, .Release);
 }
 
-fn vecToRgba(v: zm.Vec) zigimg.color.Rgba32 {
-    const r: u8 = @intFromFloat(255.999 * v[0]);
-    const g: u8 = @intFromFloat(255.999 * v[1]);
-    const b: u8 = @intFromFloat(255.999 * v[2]);
-    const a: u8 = @intFromFloat(255.999 * v[3]);
+fn vecToRgba(v: zm.Vec, samples_per_pixel: usize) zigimg.color.Rgba32 {
+    const scale: f32 = 1.0 / @as(f32, @floatFromInt(samples_per_pixel));
+    const intensity = IntervalF32.init(0.0, 0.999);
+
+    const r_scaled = v[0] * scale;
+    const g_scaled = v[1] * scale;
+    const b_scaled = v[2] * scale;
+    const a_scaled = v[3] * scale;
+
+    const r: u8 = @intFromFloat(256 * intensity.clamp(r_scaled));
+    const g: u8 = @intFromFloat(256 * intensity.clamp(g_scaled));
+    const b: u8 = @intFromFloat(256 * intensity.clamp(b_scaled));
+    const a: u8 = @intFromFloat(256 * intensity.clamp(a_scaled));
 
     return zigimg.color.Rgba32.initRgba(r, g, b, a);
 }
