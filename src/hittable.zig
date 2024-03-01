@@ -4,6 +4,8 @@ const zm = @import("zmath");
 
 const IntervalF32 = @import("interval.zig").IntervalF32;
 const Ray = @import("ray.zig");
+
+// Hittable Objects
 pub const Sphere = @import("hittable/sphere.zig");
 
 pub const HitRecord = struct {

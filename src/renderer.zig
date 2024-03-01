@@ -2,15 +2,15 @@ const std = @import("std");
 
 const spall = @import("spall");
 const zigimg = @import("zigimg");
-const color = zigimg.color;
 const zm = @import("zmath");
 
 pub const Camera = @import("camera.zig");
+pub const hittable = @import("hittable.zig");
+pub const Ray = @import("ray.zig");
+
 pub const interval = @import("interval.zig");
 pub const IntervalUsize = interval.IntervalUsize;
 pub const IntervalF32 = interval.IntervalF32;
-pub const hittable = @import("hittable.zig");
-pub const Ray = @import("ray.zig");
 
 const log = std.log.scoped(.renderer);
 
@@ -31,17 +31,11 @@ pub fn rayColor(r: *Ray, world: *hittable.HittableList) zm.Vec {
 
 pub fn run(ctx: Context, height: IntervalUsize, width: IntervalUsize) void {
     var height_iter = height.iter();
-    height_iter.upper_boundry = .inclusive;
-
-    while (height_iter.next()) |j| {
+    while (height_iter.nextInc()) |j| {
         if (j >= ctx.cam.image_height) break;
 
         var width_iter = width.iter();
-        height_iter.upper_boundry = .inclusive;
-
-        while (width_iter.next()) |i| inner: {
-            if (i >= ctx.cam.image_width) break :inner;
-
+        while (width_iter.nextExc()) |i| {
             const pixel_center = ctx.cam.pixel00_loc + (zm.f32x4s(@as(f32, @floatFromInt(i))) * ctx.cam.pixel_delta_u) + (zm.f32x4s(@as(f32, @floatFromInt(j))) * ctx.cam.pixel_delta_v);
             const ray_direction = pixel_center - ctx.cam.camera_center;
             var ray = Ray.init(ctx.cam.camera_center, ray_direction);
@@ -69,11 +63,11 @@ pub fn renderThread(ctx: Context, done: *std.atomic.Value(bool), row: usize, row
     done.store(true, .Release);
 }
 
-fn vecToRgba(v: zm.Vec) color.Rgba32 {
+fn vecToRgba(v: zm.Vec) zigimg.color.Rgba32 {
     const r: u8 = @intFromFloat(255.999 * v[0]);
     const g: u8 = @intFromFloat(255.999 * v[1]);
     const b: u8 = @intFromFloat(255.999 * v[2]);
     const a: u8 = @intFromFloat(255.999 * v[3]);
 
-    return color.Rgba32.initRgba(r, g, b, a);
+    return zigimg.color.Rgba32.initRgba(r, g, b, a);
 }

@@ -54,6 +54,16 @@ pub fn Interval(comptime T: type) type {
                         return self.current;
                     } else return null;
                 }
+
+                pub fn nextInc(self: *Iterator) ?T {
+                    self.current += 1;
+                    return if (self.current <= self.interval.max) self.current else null;
+                }
+
+                pub fn nextExc(self: *Iterator) ?T {
+                    self.current += 1;
+                    return if (self.current < self.interval.max) self.current else null;
+                }
             };
 
             min: T,

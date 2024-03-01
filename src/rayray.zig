@@ -3,7 +3,6 @@ const std = @import("std");
 const spall = @import("spall");
 const zigimg = @import("zigimg");
 const color = zigimg.color;
-const zm = @import("zmath");
 
 pub const Camera = @import("camera.zig");
 pub const hittable = @import("hittable.zig");

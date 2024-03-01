@@ -25,12 +25,14 @@ pub fn main() !void {
     spall.init_thread();
     defer spall.deinit_thread();
 
+    // Setting up the world
     var world = HittableList.init(allocator);
     try world.add(Hittable.initSphere(Sphere{ .center = zm.f32x4(0, 0, -1, 0), .radius = 0.5 }));
     try world.add(Hittable.initSphere(Sphere{ .center = zm.f32x4(0, -100.5, -1, 0), .radius = 100 }));
 
-    const s = spall.trace(@src(), "Main", .{});
+    const s = spall.trace(@src(), "Raytracer", .{});
 
+    // Raytracing part
     var raytracer = try rayray.Raytracer.init(allocator, world);
     defer raytracer.deinit();
 
@@ -39,8 +41,10 @@ pub fn main() !void {
 
     s.end();
 
+    // Saving to file
     const s_saving = spall.trace(@src(), "Write Image", .{});
     defer s_saving.end();
+
     try img.writeToFilePath("./out/out.png", .{ .png = .{} });
     std.log.info("Image saved to: out/out.ong", .{});
 }
