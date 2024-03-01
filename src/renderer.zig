@@ -21,7 +21,7 @@ pub const Context = struct {
 
 pub fn rayColor(r: *Ray, world: *hittable.HittableList) zm.Vec {
     if (world.hit(r, IntervalF32.init(0, std.math.inf(f32)))) |rec| {
-        return zm.f32x4s(0.5) * (rec.normal + zm.f32x4(1, 1, 1, 1));
+        return zm.f32x4(0.5, 0.5, 0.5, 1.0) * (rec.normal + zm.f32x4(1, 1, 1, 1));
     }
 
     const unit_direction = zm.normalize3(r.dir);
