@@ -24,10 +24,10 @@ pub const Raytracer = struct {
     camera: Camera,
     world: hittable.HittableList,
 
-    pub fn init(allocator: std.mem.Allocator, world: hittable.HittableList) !Self {
+    pub fn init(allocator: std.mem.Allocator, world: hittable.HittableList, camera_opts: Camera.Options) !Self {
         return .{
             .allocator = allocator,
-            .camera = try Camera.init(allocator, 400, 16.0 / 9.0),
+            .camera = try Camera.init(allocator, camera_opts),
             .world = world,
         };
     }

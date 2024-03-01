@@ -8,6 +8,11 @@ const log = std.log.scoped(.camera);
 
 const Camera = @This();
 
+pub const Options = struct {
+    image_width: usize,
+    aspect_ratio: f32,
+};
+
 image_height: usize,
 image_width: usize,
 aspect_ratio: f32,
@@ -27,7 +32,9 @@ pixel00_loc: zm.Vec,
 
 image: zigimg.Image,
 
-pub fn init(allocator: std.mem.Allocator, image_width: usize, aspect_ratio: f32) !Camera {
+pub fn init(allocator: std.mem.Allocator, opts: Options) !Camera {
+    const image_width = opts.image_width;
+    const aspect_ratio = opts.aspect_ratio;
     const image_height = @as(usize, @intFromFloat(@as(f32, @floatFromInt(image_width)) / aspect_ratio));
     if (image_height < 1) return error.ImageWidthLessThanOne;
 
