@@ -3,6 +3,7 @@ const std = @import("std");
 const zm = @import("zmath");
 
 const IntervalF32 = @import("interval.zig").IntervalF32;
+const Material = @import("material.zig").Material;
 const Ray = @import("ray.zig");
 
 // Hittable Objects
@@ -11,6 +12,7 @@ pub const Sphere = @import("hittable/sphere.zig");
 pub const HitRecord = struct {
     p: zm.Vec,
     normal: zm.Vec = zm.f32x4s(1.0),
+    mat: *Material,
     t: f32,
     front_face: bool = true,
 

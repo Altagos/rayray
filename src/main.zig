@@ -7,6 +7,7 @@ const zm = @import("zmath");
 const rayray = @import("rayray");
 const Hittable = rayray.hittable.Hittable;
 const HittableList = rayray.hittable.HittableList;
+const Material = rayray.material.Material;
 const Sphere = rayray.hittable.Sphere;
 
 pub const std_options = .{
@@ -26,9 +27,16 @@ pub fn main() !void {
     defer spall.deinit_thread();
 
     // Setting up the world
+    var material_ground = Material.lambertian(zm.f32x4(0.8, 0.8, 0.0, 1.0));
+    var material_center = Material.lambertian(zm.f32x4(0.7, 0.3, 0.3, 1.0));
+    var material_left = Material.metal(zm.f32x4(0.8, 0.8, 0.8, 1.0));
+    var material_right = Material.metal(zm.f32x4(0.8, 0.6, 0.2, 1.0));
+
     var world = HittableList.init(allocator);
-    try world.add(Hittable.initSphere(Sphere{ .center = zm.f32x4(0, 0, -1, 0), .radius = 0.5 }));
-    try world.add(Hittable.initSphere(Sphere{ .center = zm.f32x4(0, -100.5, -1, 0), .radius = 100 }));
+    try world.add(Hittable.initSphere(Sphere{ .center = zm.f32x4(0, -100.5, -1, 0), .radius = 100, .mat = &material_ground }));
+    try world.add(Hittable.initSphere(Sphere{ .center = zm.f32x4(0, 0, -1, 0), .radius = 0.5, .mat = &material_center }));
+    try world.add(Hittable.initSphere(Sphere{ .center = zm.f32x4(-1, 0, -1, 0), .radius = 0.5, .mat = &material_left }));
+    try world.add(Hittable.initSphere(Sphere{ .center = zm.f32x4(1, 0, -1, 0), .radius = 0.5, .mat = &material_right }));
 
     const s = spall.trace(@src(), "Raytracer", .{});
 

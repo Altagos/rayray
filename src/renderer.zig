@@ -6,6 +6,7 @@ const zm = @import("zmath");
 
 const Camera = @import("camera.zig");
 const hittable = @import("hittable.zig");
+const material = @import("material.zig");
 const Ray = @import("ray.zig");
 const util = @import("util.zig");
 
@@ -24,9 +25,12 @@ pub fn rayColor(r: *Ray, world: *hittable.HittableList, depth: usize) zm.Vec {
     if (depth <= 0) return zm.f32x4(0, 0, 0, 1.0);
 
     if (world.hit(r, IntervalF32.init(0.001, std.math.inf(f32)))) |rec| {
-        r.orig = rec.p;
-        r.dir = rec.normal + util.randomUnitVec();
-        return zm.f32x4(0.1, 0.1, 0.1, 1.0) * rayColor(r, world, depth - 1);
+        var attenuation = zm.f32x4s(1.0);
+        if (rec.mat.scatter(r, @constCast(&rec), &attenuation)) |new_r| {
+            return attenuation * rayColor(@constCast(&new_r), world, depth - 1);
+        }
+
+        return zm.f32x4(0, 0, 0, 1.0);
     }
 
     const unit_direction = zm.normalize3(r.dir);

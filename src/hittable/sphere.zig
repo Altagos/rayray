@@ -3,11 +3,13 @@ const zm = @import("zmath");
 const IntervalF32 = @import("../interval.zig").IntervalF32;
 const Ray = @import("../ray.zig");
 const HitRecord = @import("../hittable.zig").HitRecord;
+const Material = @import("../material.zig").Material;
 
 const Sphere = @This();
 
 center: zm.Vec,
 radius: f32,
+mat: *Material,
 
 pub fn hit(self: *Sphere, r: *Ray, ray_t: IntervalF32) ?HitRecord {
     const oc = r.orig - self.center;
@@ -30,6 +32,7 @@ pub fn hit(self: *Sphere, r: *Ray, ray_t: IntervalF32) ?HitRecord {
     var rec = HitRecord{
         .t = root,
         .p = r.at(root),
+        .mat = self.mat,
     };
 
     const outward_normal = (rec.p - self.center) / zm.f32x4s(self.radius);
