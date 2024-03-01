@@ -25,8 +25,8 @@ pub fn rayColor(r: *Ray, world: *hittable.HittableList, depth: usize) zm.Vec {
 
     if (world.hit(r, IntervalF32.init(0.001, std.math.inf(f32)))) |rec| {
         r.orig = rec.p;
-        r.dir = util.randomOnHemisphere(rec.normal);
-        return zm.f32x4(0.5, 0.5, 0.5, 1.0) * rayColor(r, world, depth - 1);
+        r.dir = rec.normal + util.randomUnitVec();
+        return zm.f32x4(0.1, 0.1, 0.1, 1.0) * rayColor(r, world, depth - 1);
     }
 
     const unit_direction = zm.normalize3(r.dir);
@@ -73,10 +73,10 @@ fn vecToRgba(v: zm.Vec, samples_per_pixel: usize) zigimg.color.Rgba32 {
     const scale: f32 = 1.0 / @as(f32, @floatFromInt(samples_per_pixel));
     const intensity = IntervalF32.init(0.0, 0.999);
 
-    const r_scaled = v[0] * scale;
-    const g_scaled = v[1] * scale;
-    const b_scaled = v[2] * scale;
-    const a_scaled = v[3] * scale;
+    const r_scaled = linearToGamma(v[0] * scale);
+    const g_scaled = linearToGamma(v[1] * scale);
+    const b_scaled = linearToGamma(v[2] * scale);
+    const a_scaled = linearToGamma(v[3] * scale);
 
     const r: u8 = @intFromFloat(256 * intensity.clamp(r_scaled));
     const g: u8 = @intFromFloat(256 * intensity.clamp(g_scaled));
@@ -84,4 +84,8 @@ fn vecToRgba(v: zm.Vec, samples_per_pixel: usize) zigimg.color.Rgba32 {
     const a: u8 = @intFromFloat(256 * intensity.clamp(a_scaled));
 
     return zigimg.color.Rgba32.initRgba(r, g, b, a);
+}
+
+inline fn linearToGamma(linear_component: f32) f32 {
+    return @sqrt(linear_component);
 }
