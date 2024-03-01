@@ -12,8 +12,8 @@ pub const Material = union(enum) {
         return .{ .lambertian = .{ .albedo = albedo } };
     }
 
-    pub fn metal(albedo: zm.Vec) Material {
-        return .{ .metal = .{ .albedo = albedo } };
+    pub fn metal(albedo: zm.Vec, fuzz: f32) Material {
+        return .{ .metal = .{ .albedo = albedo, .fuzz = if (fuzz < 1) fuzz else 1.0 } };
     }
 
     pub fn scatter(self: *Material, r: *Ray, rec: *hittable.HitRecord, attenuation: *zm.Vec) ?Ray {
@@ -39,10 +39,13 @@ pub const Lambertian = struct {
 
 pub const Metal = struct {
     albedo: zm.Vec,
+    /// fuzz < 1
+    fuzz: f32,
 
     pub fn scatter(self: *Metal, r: *Ray, rec: *hittable.HitRecord, attenuation: *zm.Vec) ?Ray {
         const reflected = util.reflect(zm.normalize3(r.dir), rec.normal);
+        const scattered = Ray.init(rec.p, reflected + zm.f32x4s(self.fuzz) * util.randomUnitVec());
         attenuation.* = self.albedo;
-        return Ray.init(rec.p, reflected);
+        return if (zm.dot3(scattered.dir, rec.normal)[0] > 0) scattered else null;
     }
 };
