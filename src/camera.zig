@@ -15,12 +15,15 @@ pub const Options = struct {
     image_width: usize,
     aspect_ratio: f32,
     samples_per_pixel: usize,
+    max_depth: usize,
 };
 
 image_height: usize,
 image_width: usize,
 aspect_ratio: f32,
+
 samples_per_pixel: usize,
+max_depth: usize,
 
 focal_lenght: f32,
 viewport_height: f32,
@@ -66,7 +69,9 @@ pub fn init(allocator: std.mem.Allocator, opts: Options) !Camera {
         .image_width = image_width,
         .image_height = image_height,
         .aspect_ratio = aspect_ratio,
+
         .samples_per_pixel = opts.samples_per_pixel,
+        .max_depth = opts.max_depth,
 
         .focal_lenght = focal_lenght,
         .viewport_height = viewport_height,

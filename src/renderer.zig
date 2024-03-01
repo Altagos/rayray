@@ -4,13 +4,14 @@ const spall = @import("spall");
 const zigimg = @import("zigimg");
 const zm = @import("zmath");
 
-pub const Camera = @import("camera.zig");
-pub const hittable = @import("hittable.zig");
-pub const Ray = @import("ray.zig");
+const Camera = @import("camera.zig");
+const hittable = @import("hittable.zig");
+const Ray = @import("ray.zig");
+const util = @import("util.zig");
 
-pub const interval = @import("interval.zig");
-pub const IntervalUsize = interval.IntervalUsize;
-pub const IntervalF32 = interval.IntervalF32;
+const interval = @import("interval.zig");
+const IntervalUsize = interval.IntervalUsize;
+const IntervalF32 = interval.IntervalF32;
 
 const log = std.log.scoped(.renderer);
 
@@ -19,9 +20,13 @@ pub const Context = struct {
     world: *hittable.HittableList,
 };
 
-pub fn rayColor(r: *Ray, world: *hittable.HittableList) zm.Vec {
-    if (world.hit(r, IntervalF32.init(0, std.math.inf(f32)))) |rec| {
-        return zm.f32x4(0.5, 0.5, 0.5, 1.0) * (rec.normal + zm.f32x4(1, 1, 1, 1));
+pub fn rayColor(r: *Ray, world: *hittable.HittableList, depth: usize) zm.Vec {
+    if (depth <= 0) return zm.f32x4(0, 0, 0, 1.0);
+
+    if (world.hit(r, IntervalF32.init(0.001, std.math.inf(f32)))) |rec| {
+        r.orig = rec.p;
+        r.dir = util.randomOnHemisphere(rec.normal);
+        return zm.f32x4(0.5, 0.5, 0.5, 1.0) * rayColor(r, world, depth - 1);
     }
 
     const unit_direction = zm.normalize3(r.dir);
@@ -39,7 +44,7 @@ pub fn run(ctx: Context, height: IntervalUsize, width: IntervalUsize) void {
             var col = zm.f32x4(0.0, 0.0, 0.0, 1.0);
             for (0..ctx.cam.samples_per_pixel) |_| {
                 var ray = ctx.cam.getRay(i, j);
-                col += rayColor(&ray, ctx.world);
+                col += rayColor(&ray, ctx.world, ctx.cam.max_depth);
             }
 
             ctx.cam.setPixel(i, j, vecToRgba(col, ctx.cam.samples_per_pixel)) catch break;
