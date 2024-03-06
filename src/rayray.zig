@@ -6,11 +6,10 @@ const color = zigimg.color;
 
 pub const Camera = @import("camera.zig");
 pub const hittable = @import("hittable.zig");
-pub const interval = @import("interval.zig");
 pub const material = @import("material.zig");
 pub const renderer = @import("renderer.zig");
 
-const IntervalUsize = @import("interval.zig").IntervalUsize;
+const IntervalUsize = @import("a").interval.IntervalUsize;
 
 const log = std.log.scoped(.rayray);
 

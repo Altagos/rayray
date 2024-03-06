@@ -10,7 +10,7 @@ const material = @import("material.zig");
 const Ray = @import("ray.zig");
 const util = @import("util.zig");
 
-const interval = @import("interval.zig");
+const interval = @import("a").interval;
 const IntervalUsize = interval.IntervalUsize;
 const IntervalF32 = interval.IntervalF32;
 

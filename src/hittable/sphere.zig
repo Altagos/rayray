@@ -1,6 +1,6 @@
 const zm = @import("zmath");
 
-const IntervalF32 = @import("../interval.zig").IntervalF32;
+const IntervalF32 = @import("a").interval.IntervalF32;
 const Ray = @import("../ray.zig");
 const HitRecord = @import("../hittable.zig").HitRecord;
 const Material = @import("../material.zig").Material;
