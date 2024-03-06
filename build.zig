@@ -9,11 +9,15 @@ pub fn build(b: *std.Build) void {
         .enable = enable_spall,
     });
 
+    const strip = b.option(bool, "strip", "") orelse false;
+
     const rayray = b.addModule("rayray", .{
         .root_source_file = .{ .path = "src/rayray.zig" },
         .target = target,
         .optimize = optimize,
     });
+    rayray.strip = strip;
+
     rayray.addImport("spall", spall.module("spall"));
 
     addDeps(b, rayray);
@@ -24,6 +28,8 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    exe.root_module.strip = strip;
+
     addDeps(b, &exe.root_module);
     exe.root_module.addImport("spall", spall.module("spall"));
     exe.root_module.addImport("rayray", rayray);
