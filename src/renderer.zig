@@ -56,23 +56,6 @@ pub fn run(ctx: Context, height: IntervalUsize, width: IntervalUsize) void {
     }
 }
 
-pub fn renderThread(ctx: Context, done: *std.atomic.Value(bool), row: usize, row_height: usize) void {
-    spall.init_thread();
-    defer spall.deinit_thread();
-
-    const height = IntervalUsize{ .min = row_height * row, .max = row_height * row + row_height };
-    const width = IntervalUsize{ .min = 0, .max = ctx.cam.image_width };
-
-    log.debug("Started Render Thread {}", .{row});
-
-    const s = spall.trace(@src(), "Render Thread {}", .{row});
-    defer s.end();
-
-    run(ctx, height, width);
-
-    done.store(true, .Release);
-}
-
 fn vecToRgba(v: zm.Vec, samples_per_pixel: usize) zigimg.color.Rgba32 {
     const scale: f32 = 1.0 / @as(f32, @floatFromInt(samples_per_pixel));
     const intensity = IntervalF32.init(0.0, 0.999);

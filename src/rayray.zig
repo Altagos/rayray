@@ -10,6 +10,8 @@ pub const interval = @import("interval.zig");
 pub const material = @import("material.zig");
 pub const renderer = @import("renderer.zig");
 
+const IntervalUsize = @import("interval.zig").IntervalUsize;
+
 const log = std.log.scoped(.rayray);
 
 const ThreadTracker = struct {
@@ -62,7 +64,7 @@ pub const Raytracer = struct {
 
         for (0..num_threads) |row| {
             const ctx = renderer.Context{ .cam = &self.camera, .world = &self.world };
-            const t = try std.Thread.spawn(.{}, renderer.renderThread, .{ ctx, &threads[row].done, row, row_height });
+            const t = try std.Thread.spawn(.{}, renderThread, .{ ctx, &threads[row].done, row, row_height });
             threads[row].thread = t;
         }
 
@@ -72,7 +74,7 @@ pub const Raytracer = struct {
             .terminal = stderr,
             .supports_ansi_escape_codes = true,
         };
-        var node = progress.start("Rendering Completed", num_threads);
+        var node = progress.start("Rendering", num_threads);
         node.activate();
 
         while (true) {
@@ -83,13 +85,13 @@ pub const Raytracer = struct {
                     threads[id].thread.join();
                     threads[id].marked_as_done = true;
                     finished_threads[id] = true;
-                    // node.completeOne();
+                    node.completeOne();
                 } else if (!threads[id].done.load(.Acquire)) {
                     done = false;
                 }
             }
 
-            // node.context.refresh();
+            node.context.refresh();
 
             if (done) break;
         }
@@ -99,3 +101,20 @@ pub const Raytracer = struct {
         return self.camera.image;
     }
 };
+
+pub fn renderThread(ctx: renderer.Context, done: *std.atomic.Value(bool), row: usize, row_height: usize) void {
+    spall.init_thread();
+    defer spall.deinit_thread();
+
+    const height = IntervalUsize{ .min = row_height * row, .max = row_height * row + row_height };
+    const width = IntervalUsize{ .min = 0, .max = ctx.cam.image_width };
+
+    // log.debug("Started Render Thread {}", .{row});
+
+    const s = spall.trace(@src(), "Render Thread {}", .{row});
+    defer s.end();
+
+    renderer.run(ctx, height, width);
+
+    done.store(true, .Release);
+}
