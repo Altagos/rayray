@@ -5,8 +5,8 @@
     .dependencies = .{
         // See `zig fetch --save <url>` for a command-line interface for adding dependencies.
         .a = .{
-            .url = "https://git.sr.ht/~altagos/a/archive/790275535ae4ea236406dc198413c4d4f31919e7.tar.gz",
-            .hash = "12204b052e9dda5b17e6271afcf4bf0112d4f5012b73201cec4fbb6cc85e1d400ec5",
+            .url = "https://git.sr.ht/~altagos/a/archive/8c8f2cc405743d062f5b617e2f8ab85ce5dc0409.tar.gz",
+            .hash = "12203338074c5e0fed0696abfa1ec868da0d1bb22539e5fd4220b2585a8f3cf0c788",
         },
         .zigimg = .{
             .url = "https://github.com/rockorager/zigimg/archive/19a49a7e44fb4b1c22341dfbd6566019de742055.tar.gz",
