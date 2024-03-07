@@ -49,8 +49,13 @@ pub fn main() !void {
     });
     defer raytracer.deinit();
 
+    var timer = try std.time.Timer.start();
+
     const img = try raytracer.render();
-    std.log.info("Image rendered", .{});
+
+    const rendering_time = timer.lap();
+
+    std.log.info("Image rendered ({}s)", .{rendering_time / std.time.ns_per_s});
 
     s.end();
 
@@ -59,5 +64,5 @@ pub fn main() !void {
     defer s_saving.end();
 
     try img.writeToFilePath("./out/out.png", .{ .png = .{} });
-    std.log.info("Image saved to: out/out.ong", .{});
+    std.log.info("Image saved to: ./out/out.ong", .{});
 }

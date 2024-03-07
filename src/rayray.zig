@@ -63,7 +63,16 @@ pub const Raytracer = struct {
 
         for (0..num_threads) |row| {
             const ctx = renderer.Context{ .cam = &self.camera, .world = &self.world };
-            const t = try std.Thread.spawn(.{}, renderThread, .{ ctx, &threads[row].done, row, row_height });
+            const t = try std.Thread.spawn(
+                .{},
+                renderThread,
+                .{
+                    ctx,
+                    &threads[row].done,
+                    row,
+                    row_height,
+                },
+            );
             threads[row].thread = t;
         }
 
@@ -74,7 +83,8 @@ pub const Raytracer = struct {
             .supports_ansi_escape_codes = true,
         };
         var node = progress.start("Rendering", num_threads);
-        node.activate();
+        // node.activate();
+        node.context.refresh();
 
         while (true) {
             var done = true;
@@ -89,8 +99,6 @@ pub const Raytracer = struct {
                     done = false;
                 }
             }
-
-            node.context.refresh();
 
             if (done) break;
         }
