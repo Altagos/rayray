@@ -24,7 +24,7 @@ pub const Context = struct {
 pub fn rayColor(r: *Ray, world: *hittable.HittableList, depth: usize) zm.Vec {
     if (depth <= 0) return zm.f32x4(0, 0, 0, 1.0);
 
-    if (world.hit(r, IntervalF32.init(0.001, std.math.inf(f32)))) |rec| {
+    if (world.hit(r, .{ .min = 0.001, .max = std.math.inf(f32) })) |rec| {
         var attenuation = zm.f32x4s(1.0);
         if (rec.mat.scatter(r, @constCast(&rec), &attenuation)) |new_r| {
             return attenuation * rayColor(@constCast(&new_r), world, depth - 1);

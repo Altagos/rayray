@@ -59,8 +59,6 @@ pub const Raytracer = struct {
         var threads = try self.allocator.alloc(ThreadTracker, num_threads);
         defer self.allocator.free(threads);
 
-        const finished_threads = try self.allocator.alloc(bool, num_threads);
-
         for (0..num_threads) |row| {
             const ctx = renderer.Context{ .cam = &self.camera, .world = &self.world };
             const t = try std.Thread.spawn(
@@ -82,20 +80,21 @@ pub const Raytracer = struct {
             .terminal = stderr,
             .supports_ansi_escape_codes = true,
         };
-        var node = progress.start("Rendering", num_threads);
-        // node.activate();
+        var node = progress.start("Rendered Chunks", num_threads);
+        node.setCompletedItems(0);
         node.context.refresh();
 
         while (true) {
             var done = true;
 
             for (0..num_threads) |id| {
-                if (threads[id].done.load(.Acquire) and !threads[id].marked_as_done) {
+                const thead_done = threads[id].done.load(.Acquire);
+                if (thead_done and !threads[id].marked_as_done) {
                     threads[id].thread.join();
                     threads[id].marked_as_done = true;
-                    finished_threads[id] = true;
+
                     node.completeOne();
-                } else if (!threads[id].done.load(.Acquire)) {
+                } else if (!thead_done) {
                     done = false;
                 }
             }
@@ -103,7 +102,7 @@ pub const Raytracer = struct {
             if (done) break;
         }
 
-        node.end();
+        // node.end();
 
         return self.camera.image;
     }

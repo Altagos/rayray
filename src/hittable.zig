@@ -22,21 +22,17 @@ pub const HitRecord = struct {
     }
 };
 
-pub const HittableType = enum {
-    sphere,
-};
-
-pub const Hittable = union(HittableType) {
+pub const Hittable = union(enum) {
     sphere: Sphere,
 
-    pub fn initSphere(sphere: Sphere) Hittable {
-        return .{ .sphere = sphere };
+    pub fn sphere(s: Sphere) Hittable {
+        return .{ .sphere = s };
     }
 
     pub fn hit(self: *Hittable, r: *Ray, ray_t: IntervalF32) ?HitRecord {
         switch (self.*) {
-            .sphere => |*sphere| {
-                return sphere.hit(r, ray_t);
+            .sphere => |*s| {
+                return s.hit(r, ray_t);
             },
         }
 
