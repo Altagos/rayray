@@ -14,7 +14,7 @@ const interval = @import("a").interval;
 const IntervalUsize = interval.IntervalUsize;
 const IntervalF32 = interval.IntervalF32;
 
-const log = std.log.scoped(.renderer);
+const log = std.log.scoped(.tracer);
 
 pub const Context = struct {
     cam: *Camera,
@@ -38,7 +38,7 @@ pub fn rayColor(r: *Ray, world: *hittable.HittableList, depth: usize) zm.Vec {
     return zm.f32x4s(1.0 - a) * zm.f32x4s(1.0) + zm.f32x4s(a) * zm.f32x4(0.5, 0.7, 1.0, 1.0);
 }
 
-pub fn run(ctx: Context, height: IntervalUsize, width: IntervalUsize) void {
+pub fn trace(ctx: Context, height: IntervalUsize, width: IntervalUsize) void {
     var height_iter = height.iter();
     while (height_iter.nextInc()) |j| {
         if (j >= ctx.cam.image_height) break;

@@ -7,7 +7,7 @@ const color = zigimg.color;
 pub const Camera = @import("camera.zig");
 pub const hittable = @import("hittable.zig");
 pub const material = @import("material.zig");
-pub const renderer = @import("renderer.zig");
+pub const tracer = @import("tracer.zig");
 
 const IntervalUsize = @import("a").interval.IntervalUsize;
 
@@ -60,7 +60,7 @@ pub const Raytracer = struct {
         defer self.allocator.free(threads);
 
         for (0..num_threads) |row| {
-            const ctx = renderer.Context{ .cam = &self.camera, .world = &self.world };
+            const ctx = tracer.Context{ .cam = &self.camera, .world = &self.world };
             const t = try std.Thread.spawn(
                 .{},
                 renderThread,
@@ -108,7 +108,7 @@ pub const Raytracer = struct {
     }
 };
 
-pub fn renderThread(ctx: renderer.Context, done: *std.atomic.Value(bool), row: usize, row_height: usize) void {
+pub fn renderThread(ctx: tracer.Context, done: *std.atomic.Value(bool), row: usize, row_height: usize) void {
     spall.init_thread();
     defer spall.deinit_thread();
 
@@ -120,7 +120,7 @@ pub fn renderThread(ctx: renderer.Context, done: *std.atomic.Value(bool), row: u
     const s = spall.trace(@src(), "Render Thread {}", .{row});
     defer s.end();
 
-    renderer.run(ctx, height, width);
+    tracer.trace(ctx, height, width);
 
     done.store(true, .Release);
 }
