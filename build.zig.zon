@@ -8,13 +8,13 @@
             .url = "https://git.sr.ht/~altagos/a/archive/8c8f2cc405743d062f5b617e2f8ab85ce5dc0409.tar.gz",
             .hash = "12203338074c5e0fed0696abfa1ec868da0d1bb22539e5fd4220b2585a8f3cf0c788",
         },
-        .zigimg = .{
-            .url = "https://github.com/rockorager/zigimg/archive/19a49a7e44fb4b1c22341dfbd6566019de742055.tar.gz",
-            .hash = "1220ebfa8587cfd644995fc08e218dbb3ebd7344fb8e129ff02bc5a6d52a2325370d",
-        },
         .spall = .{
             .url = "https://git.sr.ht/~altagos/zig-spall/archive/7cae52aa2d1a519006e0c90fbd179cf7fcac0c83.tar.gz",
             .hash = "1220753b2f9e7c4f3fb6cdc8fc275cc9073904ea7032a1f5596aa776a857de69f72c",
+        },
+        .zigimg = .{
+            .url = "git+https://github.com/MidlightStudio/zigimg#29d34702995a7e84e097004e87ede905cdb674dd",
+            .hash = "12206b669a4712ff9c06d4111a650f298d7597dd39f9d4853858d7f298c819353a65",
         },
 
         // libs folder

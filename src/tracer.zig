@@ -19,6 +19,8 @@ const log = std.log.scoped(.tracer);
 pub const Context = struct {
     cam: *Camera,
     world: *hittable.HittableList,
+    height: IntervalUsize,
+    width: IntervalUsize,
 };
 
 pub fn rayColor(r: *Ray, world: *hittable.HittableList, depth: usize) zm.Vec {
@@ -38,12 +40,12 @@ pub fn rayColor(r: *Ray, world: *hittable.HittableList, depth: usize) zm.Vec {
     return zm.f32x4s(1.0 - a) * zm.f32x4s(1.0) + zm.f32x4s(a) * zm.f32x4(0.5, 0.7, 1.0, 1.0);
 }
 
-pub fn trace(ctx: Context, height: IntervalUsize, width: IntervalUsize) void {
-    var height_iter = height.iter();
+pub fn trace(ctx: Context) void {
+    var height_iter = ctx.height.iter();
     while (height_iter.nextInc()) |j| {
         if (j >= ctx.cam.image_height) break;
 
-        var width_iter = width.iter();
+        var width_iter = ctx.width.iter();
         while (width_iter.nextExc()) |i| {
             var col = zm.f32x4(0.0, 0.0, 0.0, 1.0);
             for (0..ctx.cam.samples_per_pixel) |_| {
