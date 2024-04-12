@@ -48,9 +48,13 @@ pub fn main() !void {
         .image_width = 400,
         .samples_per_pixel = 100,
         .max_depth = 50,
+
         .vfov = 20,
         .look_from = zm.f32x4(-2, 2, 1, 0),
         .look_at = zm.f32x4(0, 0, -1, 0),
+
+        .defocus_angle = 10.0,
+        .focus_dist = 3.4,
     });
     defer raytracer.deinit();
 

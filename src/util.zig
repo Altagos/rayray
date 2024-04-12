@@ -41,6 +41,13 @@ pub inline fn randomVecM(min: f32, max: f32) zm.Vec {
     return zm.f32x4(randomF32M(min, max), randomF32M(min, max), randomF32M(min, max), randomF32M(min, max));
 }
 
+pub inline fn randomInUnitDisk() zm.Vec {
+    while (true) {
+        const p = zm.f32x4(randomF32M(-1, 1), randomF32M(-1, 1), 0, 0);
+        if (zm.lengthSq3(p)[0] < 1.0) return p;
+    }
+}
+
 pub inline fn randomInUnitSphere() zm.Vec {
     while (true) {
         const p = randomVec3M(-1.0, 1.0);
