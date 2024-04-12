@@ -61,6 +61,13 @@ pub fn nearZero(e: zm.Vec) bool {
     return (@abs(e[0]) < s) and (@abs(e[1]) < s) and (@abs(e[2]) < s);
 }
 
-pub fn reflect(v: zm.Vec, n: zm.Vec) zm.Vec {
+pub inline fn reflect(v: zm.Vec, n: zm.Vec) zm.Vec {
     return v - zm.f32x4s(2 * zm.dot3(v, n)[0]) * n;
+}
+
+pub inline fn refract(uv: zm.Vec, n: zm.Vec, etai_over_etat: f32) zm.Vec {
+    const cos_theta = @min(zm.dot3(-uv, n)[0], 1.0);
+    const r_out_perp = zm.f32x4s(etai_over_etat) * (uv + zm.f32x4s(cos_theta) * n);
+    const r_out_parallel = zm.f32x4s(-@sqrt(@abs(1.0 - zm.lengthSq3(r_out_perp)[0]))) * n;
+    return r_out_perp + r_out_parallel;
 }

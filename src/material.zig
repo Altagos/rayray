@@ -7,6 +7,7 @@ const util = @import("util.zig");
 pub const Material = union(enum) {
     lambertian: Lambertian,
     metal: Metal,
+    dielectric: Dielectric,
 
     pub fn lambertian(albedo: zm.Vec) Material {
         return .{ .lambertian = .{ .albedo = albedo } };
@@ -16,10 +17,15 @@ pub const Material = union(enum) {
         return .{ .metal = .{ .albedo = albedo, .fuzz = if (fuzz < 1) fuzz else 1.0 } };
     }
 
+    pub fn dielectric(refraction_index: f32) Material {
+        return .{ .dielectric = .{ .refraction_index = refraction_index } };
+    }
+
     pub fn scatter(self: *Material, r: *Ray, rec: *hittable.HitRecord, attenuation: *zm.Vec) ?Ray {
         return switch (self.*) {
             .lambertian => |*lambert| lambert.scatter(rec, attenuation),
             .metal => |*met| met.scatter(r, rec, attenuation),
+            .dielectric => |*die| die.scatter(r, rec, attenuation),
         };
     }
 };
@@ -47,5 +53,29 @@ pub const Metal = struct {
         const scattered = Ray.init(rec.p, reflected + zm.f32x4s(self.fuzz) * util.randomUnitVec());
         attenuation.* = self.albedo;
         return if (zm.dot3(scattered.dir, rec.normal)[0] > 0) scattered else null;
+    }
+};
+
+pub const Dielectric = struct {
+    refraction_index: f32,
+
+    pub fn scatter(self: *Dielectric, r: *Ray, rec: *hittable.HitRecord, attenuation: *zm.Vec) ?Ray {
+        attenuation.* = zm.f32x4s(1.0);
+        const ri = if (rec.front_face) (1.0 / self.refraction_index) else self.refraction_index;
+
+        const unit_direction = zm.normalize3(r.dir);
+        const cos_theta = @min(zm.dot3(-unit_direction, rec.normal)[0], 1.0);
+        const sin_theta = @sqrt(1.0 - cos_theta * cos_theta);
+
+        const cannot_refract = ri * sin_theta > 1.0;
+        const direction = blk: {
+            if (cannot_refract) {
+                break :blk util.reflect(unit_direction, rec.normal);
+            } else {
+                break :blk util.refract(unit_direction, rec.normal, ri);
+            }
+        };
+
+        return Ray.init(rec.p, direction);
     }
 };

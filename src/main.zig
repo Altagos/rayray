@@ -28,8 +28,8 @@ pub fn main() !void {
 
     // Setting up the world
     var material_ground = Material.lambertian(zm.f32x4(0.8, 0.8, 0.0, 1.0));
-    var material_center = Material.lambertian(zm.f32x4(0.7, 0.3, 0.3, 1.0));
-    var material_left = Material.metal(zm.f32x4(0.8, 0.8, 0.8, 1.0), 0.0);
+    var material_center = Material.lambertian(zm.f32x4(0.1, 0.2, 0.5, 1.0));
+    var material_left = Material.dielectric(1.0 / 1.33);
     var material_right = Material.metal(zm.f32x4(0.8, 0.6, 0.2, 1.0), 1.0);
 
     var world = HittableList.init(allocator);
