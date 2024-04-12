@@ -35,7 +35,7 @@ pub fn main() !void {
 
     var world = HittableList.init(allocator);
     try world.add(Hittable.sphere(Sphere{ .center = zm.f32x4(0, -100.5, -1, 0), .radius = 100, .mat = &material_ground }));
-    try world.add(Hittable.sphere(Sphere{ .center = zm.f32x4(0, 0, -1, 0), .radius = 0.5, .mat = &material_center }));
+    try world.add(Hittable.sphere(Sphere{ .center = zm.f32x4(0, 0, -1.2, 0), .radius = 0.5, .mat = &material_center }));
     try world.add(Hittable.sphere(Sphere{ .center = zm.f32x4(-1, 0, -1, 0), .radius = 0.5, .mat = &material_left }));
     try world.add(Hittable.sphere(Sphere{ .center = zm.f32x4(-1, 0, -1, 0), .radius = 0.4, .mat = &material_bubble }));
     try world.add(Hittable.sphere(Sphere{ .center = zm.f32x4(1, 0, -1, 0), .radius = 0.5, .mat = &material_right }));
@@ -48,6 +48,9 @@ pub fn main() !void {
         .image_width = 400,
         .samples_per_pixel = 100,
         .max_depth = 50,
+        .vfov = 20,
+        .look_from = zm.f32x4(-2, 2, 1, 0),
+        .look_at = zm.f32x4(0, 0, -1, 0),
     });
     defer raytracer.deinit();
 

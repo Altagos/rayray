@@ -6,6 +6,7 @@ const color = zigimg.color;
 const zm = @import("zmath");
 
 pub const Ray = @import("ray.zig");
+const util = @import("util.zig");
 
 const log = std.log.scoped(.camera);
 
@@ -16,6 +17,10 @@ pub const Options = struct {
     aspect_ratio: f32,
     samples_per_pixel: usize,
     max_depth: usize,
+    vfov: f32 = 90,
+    look_from: zm.Vec = zm.f32x4s(0),
+    look_at: zm.Vec = zm.f32x4(0, 0, -1, 0),
+    vup: zm.Vec = zm.f32x4(0, 1, 0, 0),
 };
 
 image_height: usize,
@@ -25,15 +30,23 @@ aspect_ratio: f32,
 samples_per_pixel: usize,
 max_depth: usize,
 
+vfov: f32,
+look_from: zm.Vec,
+look_at: zm.Vec,
+vup: zm.Vec,
+
 focal_lenght: f32,
 viewport_height: f32,
 viewport_width: f32,
-camera_center: zm.Vec,
+center: zm.Vec,
 
 viewport_u: zm.Vec,
 viewport_v: zm.Vec,
 pixel_delta_u: zm.Vec,
 pixel_delta_v: zm.Vec,
+u: zm.Vec,
+v: zm.Vec,
+w: zm.Vec,
 
 viewport_upper_left: zm.Vec,
 pixel00_loc: zm.Vec,
@@ -46,21 +59,32 @@ pub fn init(allocator: std.mem.Allocator, opts: Options) !Camera {
     const image_height = @as(usize, @intFromFloat(@as(f32, @floatFromInt(image_width)) / aspect_ratio));
     if (image_height < 1) return error.ImageWidthLessThanOne;
 
-    const focal_lenght: f32 = 1.0;
-    const viewport_height: f32 = 2.0;
+    const vfov = opts.vfov;
+    const look_from = opts.look_from;
+    const look_at = opts.look_at;
+    const vup = opts.vup;
+    const center = look_from;
+
+    const focal_lenght: f32 = zm.length3(look_from - look_at)[0];
+    const theta = util.degreesToRadians(opts.vfov);
+    const h = @tan(theta / 2);
+    const viewport_height: f32 = 2 * h * focal_lenght;
     const viewport_width = viewport_height * (@as(f32, @floatFromInt(image_width)) / @as(f32, @floatFromInt(image_height)));
-    const camera_center = zm.f32x4s(0.0);
+
+    const w = zm.normalize3(look_from - look_at);
+    const u = zm.normalize3(zm.cross3(vup, w));
+    const v = zm.cross3(w, u);
 
     // Calculate the vectors across the horizontal and down the vertical viewport edges.
-    const viewport_u = zm.f32x4(viewport_width, 0, 0, 0);
-    const viewport_v = zm.f32x4(0, -viewport_height, 0, 0);
+    const viewport_u = zm.f32x4s(viewport_width) * u;
+    const viewport_v = zm.f32x4s(viewport_height) * -v;
 
     // Calculate the horizontal and vertical delta vectors from pixel to pixel.
     const pixel_delta_u = viewport_u / zm.f32x4s(@as(f32, @floatFromInt(image_width)));
     const pixel_delta_v = viewport_v / zm.f32x4s(@as(f32, @floatFromInt(image_height)));
 
     // Calculate the location of the upper left pixel.
-    const viewport_upper_left = camera_center - zm.f32x4(0, 0, focal_lenght, 0) - viewport_u / zm.f32x4s(2.0) - viewport_v / zm.f32x4s(2.0);
+    const viewport_upper_left = center - zm.f32x4s(focal_lenght) * w - viewport_u / zm.f32x4s(2.0) - viewport_v / zm.f32x4s(2.0);
     const pixel00_loc = viewport_upper_left + zm.f32x4s(0.5) * (pixel_delta_u + pixel_delta_v);
 
     log.debug("image_width: {}, image_height: {}, aspect_ratio: {d:.2}, focal_lenght: {d:.1}", .{ image_width, image_height, aspect_ratio, focal_lenght });
@@ -73,15 +97,23 @@ pub fn init(allocator: std.mem.Allocator, opts: Options) !Camera {
         .samples_per_pixel = opts.samples_per_pixel,
         .max_depth = opts.max_depth,
 
+        .vfov = vfov,
+        .look_from = look_from,
+        .look_at = look_at,
+        .vup = vup,
+
         .focal_lenght = focal_lenght,
         .viewport_height = viewport_height,
         .viewport_width = viewport_width,
-        .camera_center = camera_center,
+        .center = center,
 
         .viewport_u = viewport_u,
         .viewport_v = viewport_v,
         .pixel_delta_u = pixel_delta_u,
         .pixel_delta_v = pixel_delta_v,
+        .u = u,
+        .v = v,
+        .w = w,
 
         .viewport_upper_left = viewport_upper_left,
         .pixel00_loc = pixel00_loc,
@@ -98,8 +130,8 @@ pub fn getRay(self: *Camera, i: usize, j: usize) Ray {
     const pixel_center = self.pixel00_loc + (zm.f32x4s(@as(f32, @floatFromInt(i))) * self.pixel_delta_u) + (zm.f32x4s(@as(f32, @floatFromInt(j))) * self.pixel_delta_v);
     const pixel_sample = pixel_center + self.pixelSamplesSq();
 
-    const ray_direction = pixel_sample - self.camera_center;
-    return Ray.init(self.camera_center, ray_direction);
+    const ray_direction = pixel_sample - self.center;
+    return Ray.init(self.center, ray_direction);
 }
 
 pub fn setPixel(self: *Camera, x: usize, y: usize, c: color.Rgba32) !void {

@@ -1,7 +1,11 @@
-const std = @import("std");
-const random = std.crypto.random;
+const random = @import("std").crypto.random;
+const math = @import("std").math;
 
 const zm = @import("zmath");
+
+pub inline fn degreesToRadians(degrees: f32) f32 {
+    return degrees * math.pi / 180.0;
+}
 
 /// Returns a random real in [0,1).
 pub inline fn randomF32() f32 {
