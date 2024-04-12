@@ -1,3 +1,5 @@
+const math = @import("std").math;
+
 const zm = @import("zmath");
 
 const hittable = @import("hittable.zig");
@@ -69,7 +71,7 @@ pub const Dielectric = struct {
 
         const cannot_refract = ri * sin_theta > 1.0;
         const direction = blk: {
-            if (cannot_refract) {
+            if (cannot_refract or reflectance(cos_theta, ri) > util.randomF32()) {
                 break :blk util.reflect(unit_direction, rec.normal);
             } else {
                 break :blk util.refract(unit_direction, rec.normal, ri);
@@ -77,5 +79,11 @@ pub const Dielectric = struct {
         };
 
         return Ray.init(rec.p, direction);
+    }
+
+    fn reflectance(cosine: f32, refraction_index: f32) f32 {
+        var r0 = (1 - refraction_index) / (1 + refraction_index);
+        r0 = r0 * r0;
+        return r0 + (1 - r0) * math.pow(f32, 1 - cosine, 5);
     }
 };

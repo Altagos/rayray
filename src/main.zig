@@ -29,13 +29,15 @@ pub fn main() !void {
     // Setting up the world
     var material_ground = Material.lambertian(zm.f32x4(0.8, 0.8, 0.0, 1.0));
     var material_center = Material.lambertian(zm.f32x4(0.1, 0.2, 0.5, 1.0));
-    var material_left = Material.dielectric(1.0 / 1.33);
+    var material_left = Material.dielectric(1.5);
+    var material_bubble = Material.dielectric(1.0 / 1.5);
     var material_right = Material.metal(zm.f32x4(0.8, 0.6, 0.2, 1.0), 1.0);
 
     var world = HittableList.init(allocator);
     try world.add(Hittable.sphere(Sphere{ .center = zm.f32x4(0, -100.5, -1, 0), .radius = 100, .mat = &material_ground }));
     try world.add(Hittable.sphere(Sphere{ .center = zm.f32x4(0, 0, -1, 0), .radius = 0.5, .mat = &material_center }));
     try world.add(Hittable.sphere(Sphere{ .center = zm.f32x4(-1, 0, -1, 0), .radius = 0.5, .mat = &material_left }));
+    try world.add(Hittable.sphere(Sphere{ .center = zm.f32x4(-1, 0, -1, 0), .radius = 0.4, .mat = &material_bubble }));
     try world.add(Hittable.sphere(Sphere{ .center = zm.f32x4(1, 0, -1, 0), .radius = 0.5, .mat = &material_right }));
 
     const s = spall.trace(@src(), "Raytracer", .{});
