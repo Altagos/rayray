@@ -18,15 +18,15 @@ pub inline fn randomF32M(min: f32, max: f32) f32 {
 }
 
 pub inline fn randomVec2() zm.Vec {
-    return zm.f32x4(randomF32, randomF32, 0, 0);
+    return zm.f32x4(randomF32(), randomF32(), 0, 0);
 }
 
 pub inline fn randomVec3() zm.Vec {
-    return zm.f32x4(randomF32, randomF32, randomF32, 0);
+    return zm.f32x4(randomF32(), randomF32(), randomF32(), 0);
 }
 
 pub inline fn randomVec() zm.Vec {
-    return zm.f32x4(randomF32, randomF32, randomF32, randomF32);
+    return zm.f32x4(randomF32(), randomF32(), randomF32(), randomF32());
 }
 
 pub inline fn randomVec2M(min: f32, max: f32) zm.Vec {

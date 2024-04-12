@@ -10,6 +10,7 @@ pub const Camera = @import("camera.zig");
 pub const hittable = @import("hittable.zig");
 pub const material = @import("material.zig");
 pub const tracer = @import("tracer.zig");
+pub const util = @import("util.zig");
 
 const log = std.log.scoped(.rayray);
 
@@ -120,6 +121,7 @@ pub const Raytracer = struct {
                 if (task_done and !t.marked_as_done) {
                     t.marked_as_done = true;
                     node.completeOne();
+                    try self.camera.image.writeToFilePath("./out/out.png", .{ .png = .{} });
                 } else if (!task_done) {
                     done = false;
                 }

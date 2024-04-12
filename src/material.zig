@@ -51,8 +51,8 @@ pub const Metal = struct {
     fuzz: f32,
 
     pub fn scatter(self: *Metal, r: *Ray, rec: *hittable.HitRecord, attenuation: *zm.Vec) ?Ray {
-        const reflected = util.reflect(zm.normalize3(r.dir), rec.normal);
-        const scattered = Ray.init(rec.p, reflected + zm.f32x4s(self.fuzz) * util.randomUnitVec());
+        const reflected = util.reflect(r.dir, rec.normal);
+        const scattered = Ray.init(rec.p, zm.normalize3(reflected) + zm.f32x4s(self.fuzz) * util.randomUnitVec());
         attenuation.* = self.albedo;
         return if (zm.dot3(scattered.dir, rec.normal)[0] > 0) scattered else null;
     }
