@@ -47,27 +47,22 @@ pub const Raytracer = struct {
         self.allocator.destroy(self.thread_pool);
     }
 
-    // TODO: Render in cubes not in rows
     pub fn render(self: *Self) !zigimg.Image {
         const s = spall.trace(@src(), "Render", .{});
         defer s.end();
 
-
         const chunk_height: usize = 25;
         const chunk_width: usize = 25;
-
 
         var rows: usize = @divTrunc(self.camera.image_height, chunk_height);
         if (self.camera.image_height % rows != 0) {
             rows += 1;
         }
 
-
         var cols: usize = @divTrunc(self.camera.image_width, chunk_width);
         if (self.camera.image_width % cols != 0) {
             cols += 1;
         }
-
 
         const num_chunks = cols * rows;
 
@@ -119,18 +114,12 @@ pub const Raytracer = struct {
         while (true) {
             var done = true;
 
-
             for (tasks) |*t| {
                 const task_done = t.done.load(.acquire);
-
 
                 if (task_done and !t.marked_as_done) {
                     t.marked_as_done = true;
                     node.completeOne();
-
-                } else if (!thead_done) {
-                    // try self.camera.image.writeToFilePath("./out/out.png", .{ .png = .{} });
-                    // node.context.refresh();
                 } else if (!task_done) {
                     done = false;
                 }
@@ -143,29 +132,10 @@ pub const Raytracer = struct {
 
         return self.camera.image;
     }
-}
+};
 
 pub fn renderThread(ctx: tracer.Context, task: *TaskTracker, id: usize) void {
-    spall.init_thread();
-    defer spall.deinit_thread();
-
-    // log.debug("Started Render Thread {}", .{row});
-
-    // const s = spall.trace(@src(), "Render Thread {}", .{row});
-    // defer s.end();
-
-    tracer.trace(ctx);
-
-<<<<<<< HEAD
-    {
-        task.done.store(true, .release);
-    }
-
-    // log.info("Chunk {} rendered", .{id});
     _ = id;
-||||||| parent of 3cb11d6 (chunk based rendering on a thread pool)
-    done.store(true, .Release);
-=======
+    tracer.trace(ctx);
     task.done.store(true, .release);
->>>>>>> 3cb11d6 (chunk based rendering on a thread pool)
 }
