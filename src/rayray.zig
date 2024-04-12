@@ -52,48 +52,40 @@ pub const Raytracer = struct {
         const s = spall.trace(@src(), "Render", .{});
         defer s.end();
 
-        // const rows: usize = try std.Thread.getCpuCount() - 1;
-        // const row_height = @divTrunc(self.camera.image_height, rows);
-        // const num_threads = blk: {
-        //     if (self.camera.image_height % rows == 0) {
-        //         break :blk rows;
-        //     }
-        //     break :blk rows + 1;
-        // };
 
         const chunk_height: usize = 25;
         const chunk_width: usize = 25;
+
 
         var rows: usize = @divTrunc(self.camera.image_height, chunk_height);
         if (self.camera.image_height % rows != 0) {
             rows += 1;
         }
 
+
         var cols: usize = @divTrunc(self.camera.image_width, chunk_width);
         if (self.camera.image_width % cols != 0) {
             cols += 1;
         }
 
+
         const num_chunks = cols * rows;
 
-        // log.debug("rows: {}, cols: {}, chunk_height: {}, chunk_width: {}, num_chunks: {}, num_threads: {}", .{
-        //     rows,
-        //     cols,
-        //     chunk_height,
-        //     chunk_width,
-        //     num_chunks,
-        //     self.thread_pool.threads.len,
-        // });
+        log.debug("rows: {}, cols: {}, chunk_height: {}, chunk_width: {}, num_chunks: {}, num_threads: {}", .{
+            rows,
+            cols,
+            chunk_height,
+            chunk_width,
+            num_chunks,
+            self.thread_pool.threads.len,
+        });
 
-        var tasks = try self.allocator.alloc(TaskTracker, num_chunks);
+        const tasks = try self.allocator.alloc(TaskTracker, num_chunks);
         defer self.allocator.free(tasks);
 
         for (tasks, 0..) |*t, id| {
-            var row: usize = id / cols;
-            var col: usize = id - cols * row;
-
-            row *= chunk_height;
-            col *= chunk_width;
+            const row: usize = @divTrunc(id, cols) * chunk_height;
+            const col: usize = (id - cols * @divTrunc(id, cols)) * chunk_width;
 
             const c_height = IntervalUsize{ .min = row, .max = row + chunk_height };
             const c_width = IntervalUsize{ .min = col, .max = col + chunk_width + 1 };
@@ -105,7 +97,7 @@ pub const Raytracer = struct {
                 .width = c_width,
             };
 
-            log.debug("Spawning chunk: {}, row start: {}, col start: {}", .{ id, row, col });
+            // log.debug("Spawning chunk: {}, row start: {}, col start: {}", .{ id, row, col });
 
             try self.thread_pool.spawn(
                 renderThread,
@@ -127,15 +119,18 @@ pub const Raytracer = struct {
         while (true) {
             var done = true;
 
-            for (0..num_chunks) |id| {
-                const task_done = tasks[id].done.load(.acquire);
 
-                if (task_done and !tasks[id].marked_as_done) {
-                    // threads[id].thread.join();
-                    tasks[id].marked_as_done = true;
+            for (tasks) |*t| {
+                const task_done = t.done.load(.acquire);
+
+
+                if (task_done and !t.marked_as_done) {
+                    t.marked_as_done = true;
                     node.completeOne();
-                    try self.camera.image.writeToFilePath("./out/out.png", .{ .png = .{} });
-                    node.context.refresh();
+
+                } else if (!thead_done) {
+                    // try self.camera.image.writeToFilePath("./out/out.png", .{ .png = .{} });
+                    // node.context.refresh();
                 } else if (!task_done) {
                     done = false;
                 }
@@ -148,7 +143,7 @@ pub const Raytracer = struct {
 
         return self.camera.image;
     }
-};
+}
 
 pub fn renderThread(ctx: tracer.Context, task: *TaskTracker, id: usize) void {
     spall.init_thread();
@@ -161,10 +156,16 @@ pub fn renderThread(ctx: tracer.Context, task: *TaskTracker, id: usize) void {
 
     tracer.trace(ctx);
 
+<<<<<<< HEAD
     {
         task.done.store(true, .release);
     }
 
     // log.info("Chunk {} rendered", .{id});
     _ = id;
+||||||| parent of 3cb11d6 (chunk based rendering on a thread pool)
+    done.store(true, .Release);
+=======
+    task.done.store(true, .release);
+>>>>>>> 3cb11d6 (chunk based rendering on a thread pool)
 }
