@@ -5,11 +5,11 @@
     .dependencies = .{
         // See `zig fetch --save <url>` for a command-line interface for adding dependencies.
         .a = .{
-            .url = "https://git.sr.ht/~altagos/a/archive/8c8f2cc405743d062f5b617e2f8ab85ce5dc0409.tar.gz",
+            .url = "git+https://git.sr.ht/~altagos/a#8c8f2cc405743d062f5b617e2f8ab85ce5dc0409",
             .hash = "12203338074c5e0fed0696abfa1ec868da0d1bb22539e5fd4220b2585a8f3cf0c788",
         },
         .spall = .{
-            .url = "https://git.sr.ht/~altagos/zig-spall/archive/7cae52aa2d1a519006e0c90fbd179cf7fcac0c83.tar.gz",
+            .url = "git+https://git.sr.ht/~altagos/zig-spall#7cae52aa2d1a519006e0c90fbd179cf7fcac0c83",
             .hash = "1220753b2f9e7c4f3fb6cdc8fc275cc9073904ea7032a1f5596aa776a857de69f72c",
         },
         .zigimg = .{
