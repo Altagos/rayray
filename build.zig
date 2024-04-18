@@ -56,7 +56,7 @@ fn addDeps(b: *std.Build, module: *std.Build.Module) void {
     const zmath = b.dependency("zmath", .{
         .enable_cross_platform_determinism = true,
     });
-    module.addImport("zmath", zmath.module("zmath"));
+    module.addImport("zmath", zmath.module("root"));
 
     const zigimg = b.dependency("zigimg", .{});
     module.addImport("zigimg", zigimg.module("zigimg"));
