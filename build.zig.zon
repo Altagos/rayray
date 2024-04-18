@@ -3,6 +3,9 @@
     .version = "0.1.0",
     .minimum_zig_version = "0.12.0-dev.2631+3069669bc",
     .dependencies = .{
+        // libs folder
+        .zmath = .{ .path = "libs/zmath" },
+
         // See `zig fetch --save <url>` for a command-line interface for adding dependencies.
         .a = .{
             .url = "git+https://git.sr.ht/~altagos/a#8c8f2cc405743d062f5b617e2f8ab85ce5dc0409",
@@ -16,9 +19,6 @@
             .url = "git+https://github.com/MidlightStudio/zigimg#29d34702995a7e84e097004e87ede905cdb674dd",
             .hash = "12206b669a4712ff9c06d4111a650f298d7597dd39f9d4853858d7f298c819353a65",
         },
-
-        // libs folder
-        .zmath = .{ .path = "libs/zmath" },
     },
     .paths = .{
         "build.zig",
