@@ -4,7 +4,7 @@ const spall = @import("spall");
 const zigimg = @import("zigimg");
 const color = zigimg.color;
 
-pub const Camera = @import("camera.zig");
+pub const Camera = @import("Camera.zig");
 pub const hittable = @import("hittable.zig");
 const IntervalUsize = @import("interval.zig").IntervalUsize;
 pub const material = @import("material.zig");

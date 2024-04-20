@@ -5,7 +5,7 @@ const zigimg = @import("zigimg");
 const color = zigimg.color;
 const zm = @import("zmath");
 
-pub const Ray = @import("ray.zig");
+pub const Ray = @import("Ray.zig");
 const util = @import("util.zig");
 
 const log = std.log.scoped(.camera);

@@ -3,7 +3,7 @@ const math = @import("std").math;
 const zm = @import("zmath");
 
 const hittable = @import("hittable.zig");
-const Ray = @import("ray.zig");
+const Ray = @import("Ray.zig");
 const util = @import("util.zig");
 
 pub const Material = union(enum) {

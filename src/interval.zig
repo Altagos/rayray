@@ -96,6 +96,11 @@ fn IntInterval(comptime T: type) type {
             return x;
         }
 
+        pub fn expand(self: *const Self, delta: T) Interval {
+            const padding = delta / 2;
+            return .{ .min = self.min - padding, .max = self.max + padding };
+        }
+
         pub fn iter(self: *const Self) Iterator {
             return Iterator{
                 .interval = self.*,
@@ -131,6 +136,11 @@ fn FloatInterval(comptime T: type) type {
             if (x < self.min) return self.min;
             if (x > self.max) return self.max;
             return x;
+        }
+
+        pub fn expand(self: *const Self, delta: T) Interval {
+            const padding = delta / 2;
+            return .{ .min = self.min - padding, .max = self.max + padding };
         }
     };
 }
