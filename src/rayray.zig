@@ -4,10 +4,9 @@ const spall = @import("spall");
 const zigimg = @import("zigimg");
 const color = zigimg.color;
 
-const IntervalUsize = @import("a").interval.IntervalUsize;
-
 pub const Camera = @import("camera.zig");
 pub const hittable = @import("hittable.zig");
+const IntervalUsize = @import("interval.zig").IntervalUsize;
 pub const material = @import("material.zig");
 pub const tracer = @import("tracer.zig");
 pub const util = @import("util.zig");
