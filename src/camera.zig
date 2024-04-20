@@ -161,7 +161,9 @@ pub fn getRay(self: *Camera, i: usize, j: usize) Ray {
 
     const ray_orig = if (self.defocus_angle <= 0) self.center else self.defocusDiskSample();
     const ray_direction = pixel_sample - ray_orig;
-    return Ray.init(ray_orig, ray_direction);
+    const ray_time = util.randomF32();
+
+    return Ray.initT(ray_orig, ray_direction, ray_time);
 }
 
 fn sampleSquare() zm.Vec {

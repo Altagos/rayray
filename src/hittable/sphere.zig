@@ -10,9 +10,28 @@ const Sphere = @This();
 center: zm.Vec,
 radius: f32,
 mat: *Material,
+is_moving: bool = false,
+center_vec: zm.Vec = zm.f32x4s(0),
+
+pub fn initMoving(center1: zm.Vec, center2: zm.Vec, radius: f32, mat: *Material) Sphere {
+    return .{
+        .center = center1,
+        .radius = @max(0, radius),
+        .mat = mat,
+        .is_moving = true,
+        .center_vec = center2 - center1,
+    };
+}
 
 pub fn hit(self: *Sphere, r: *Ray, ray_t: IntervalF32) ?HitRecord {
-    const oc = r.orig - self.center;
+    const center = blk: {
+        if (self.is_moving) {
+            break :blk self.sphereCenter(r.tm);
+        } else {
+            break :blk self.center;
+        }
+    };
+    const oc = r.orig - center;
     const a = zm.lengthSq3(r.dir)[0];
     const half_b = zm.dot3(oc, r.dir)[0];
     const c = zm.dot3(oc, oc)[0] - self.radius * self.radius;
@@ -39,4 +58,8 @@ pub fn hit(self: *Sphere, r: *Ray, ray_t: IntervalF32) ?HitRecord {
     rec.setFaceNormal(r, outward_normal);
 
     return rec;
+}
+
+pub fn sphereCenter(self: *Sphere, time: f32) zm.Vec {
+    return self.center + zm.f32x4s(time) * self.center_vec;
 }

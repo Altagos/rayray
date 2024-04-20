@@ -25,7 +25,7 @@ pub const Material = union(enum) {
 
     pub fn scatter(self: *Material, r: *Ray, rec: *hittable.HitRecord, attenuation: *zm.Vec) ?Ray {
         return switch (self.*) {
-            .lambertian => |*lambert| lambert.scatter(rec, attenuation),
+            .lambertian => |*lambert| lambert.scatter(r, rec, attenuation),
             .metal => |*met| met.scatter(r, rec, attenuation),
             .dielectric => |*die| die.scatter(r, rec, attenuation),
         };
@@ -35,13 +35,13 @@ pub const Material = union(enum) {
 pub const Lambertian = struct {
     albedo: zm.Vec,
 
-    pub fn scatter(self: *Lambertian, rec: *hittable.HitRecord, attenuation: *zm.Vec) ?Ray {
+    pub fn scatter(self: *Lambertian, r: *Ray, rec: *hittable.HitRecord, attenuation: *zm.Vec) ?Ray {
         var scatter_dir = rec.normal + util.randomUnitVec();
 
         if (util.nearZero(scatter_dir)) scatter_dir = rec.normal;
 
         attenuation.* = self.albedo;
-        return Ray.init(rec.p, scatter_dir);
+        return Ray.initT(rec.p, scatter_dir, r.tm);
     }
 };
 
@@ -52,7 +52,7 @@ pub const Metal = struct {
 
     pub fn scatter(self: *Metal, r: *Ray, rec: *hittable.HitRecord, attenuation: *zm.Vec) ?Ray {
         const reflected = util.reflect(r.dir, rec.normal);
-        const scattered = Ray.init(rec.p, zm.normalize3(reflected) + zm.f32x4s(self.fuzz) * util.randomUnitVec());
+        const scattered = Ray.initT(rec.p, zm.normalize3(reflected) + zm.f32x4s(self.fuzz) * util.randomUnitVec(), r.tm);
         attenuation.* = self.albedo;
         return if (zm.dot3(scattered.dir, rec.normal)[0] > 0) scattered else null;
     }
@@ -78,7 +78,7 @@ pub const Dielectric = struct {
             }
         };
 
-        return Ray.init(rec.p, direction);
+        return Ray.initT(rec.p, direction, r.tm);
     }
 
     fn reflectance(cosine: f32, refraction_index: f32) f32 {
