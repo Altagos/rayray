@@ -136,7 +136,7 @@ pub const Raytracer = struct {
 };
 
 pub fn renderThread(ctx: tracer.Context, task: *TaskTracker, id: usize) void {
+    defer task.done.store(true, .release);
     _ = id;
     tracer.trace(ctx);
-    task.done.store(true, .release);
 }

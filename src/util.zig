@@ -17,6 +17,16 @@ pub inline fn randomF32M(min: f32, max: f32) f32 {
     return min + (max - min) * randomF32();
 }
 
+/// Returns a random real in [0,1).
+pub inline fn randomI32() i32 {
+    return random.float(i32);
+}
+
+/// Returns a random real in [min,max).
+pub inline fn randomI32M(min: i32, max: i32) i32 {
+    return min + (max - min) * randomI32();
+}
+
 pub inline fn randomVec2() zm.Vec {
     return zm.f32x4(randomF32(), randomF32(), 0, 0);
 }

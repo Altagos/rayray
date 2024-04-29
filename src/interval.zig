@@ -82,6 +82,10 @@ fn IntInterval(comptime T: type) type {
             return .{ .min = min, .max = max };
         }
 
+        pub fn initI(a: Self, b: Self) Self {
+            return Self{ .min = @min(a.min, b.min), .max = @max(a.max, b.max) };
+        }
+
         pub fn contains(self: *const Self, x: T) bool {
             return self.min <= x and x <= self.max;
         }
@@ -99,6 +103,10 @@ fn IntInterval(comptime T: type) type {
         pub fn expand(self: *const Self, delta: T) Interval {
             const padding = delta / 2;
             return .{ .min = self.min - padding, .max = self.max + padding };
+        }
+
+        pub fn size(self: *const Self) T {
+            return self.max - self.min;
         }
 
         pub fn iter(self: *const Self) Iterator {
@@ -121,7 +129,11 @@ fn FloatInterval(comptime T: type) type {
         max: T,
 
         pub fn init(min: T, max: T) Self {
-            return .{ .min = min, .max = max };
+            return Self{ .min = min, .max = max };
+        }
+
+        pub fn initI(a: Self, b: Self) Self {
+            return Self{ .min = @min(a.min, b.min), .max = @max(a.max, b.max) };
         }
 
         pub fn contains(self: *const Self, x: T) bool {
@@ -138,9 +150,13 @@ fn FloatInterval(comptime T: type) type {
             return x;
         }
 
-        pub fn expand(self: *const Self, delta: T) Interval {
+        pub fn expand(self: *const Self, delta: T) Self {
             const padding = delta / 2;
             return .{ .min = self.min - padding, .max = self.max + padding };
+        }
+
+        pub fn size(self: *const Self) T {
+            return self.max - self.min;
         }
     };
 }

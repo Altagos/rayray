@@ -2,12 +2,14 @@ const std = @import("std");
 
 const zm = @import("zmath");
 
+const AABB = @import("AABB.zig");
 const IntervalF32 = @import("interval.zig").IntervalF32;
 const Material = @import("material.zig").Material;
 const Ray = @import("Ray.zig");
 
 // Hittable Objects
 pub const Sphere = @import("hittable/Sphere.zig");
+pub const BVH = @import("hittable/BVH.zig");
 
 pub const HitRecord = struct {
     p: zm.Vec,
@@ -24,14 +26,33 @@ pub const HitRecord = struct {
 
 pub const Hittable = union(enum) {
     sphere: Sphere,
+    bvh_node: BVH,
 
     pub fn sphere(s: Sphere) Hittable {
+        // std.log.info("created sphere with mat: {}", .{s.mat});
         return .{ .sphere = s };
+    }
+
+    pub fn bvh(b: BVH) Hittable {
+        return .{ .bvh_node = b };
+    }
+
+    pub fn boundingBox(self: *Hittable) AABB {
+        switch (self.*) {
+            .sphere => |*s| return s.boundingBox(),
+            .bvh_node => |*s| return s.boundingBox(),
+        }
     }
 
     pub fn hit(self: *Hittable, r: *Ray, ray_t: IntervalF32) ?HitRecord {
         switch (self.*) {
             .sphere => |*s| {
+                std.log.debug("try to hit Sphere: {}", .{s});
+                // std.log.info("hitting sphere with mat: {}", .{s.mat});
+                return s.hit(r, ray_t);
+            },
+            .bvh_node => |*s| {
+                // std.log.debug("try to hit BVH", .{});
                 return s.hit(r, ray_t);
             },
         }
@@ -42,11 +63,18 @@ pub const Hittable = union(enum) {
 
 pub const HittableList = struct {
     list: std.ArrayList(Hittable),
+    bbox: AABB = AABB{},
 
     pub fn init(allocator: std.mem.Allocator) HittableList {
         const list = std.ArrayList(Hittable).init(allocator);
 
         return .{ .list = list };
+    }
+
+    pub fn initH(allocator: std.mem.Allocator, item: Hittable) !HittableList {
+        var list = std.ArrayList(Hittable).init(allocator);
+        try list.append(item);
+        return .{ .list = list, .bbox = AABB.initAB(&AABB{}, &(@constCast(&item).boundingBox())) };
     }
 
     pub fn deinit(self: *HittableList) void {
@@ -55,6 +83,11 @@ pub const HittableList = struct {
 
     pub fn add(self: *HittableList, item: Hittable) !void {
         try self.list.append(item);
+        self.bbox = AABB.initAB(&self.bbox, &(@constCast(&item).boundingBox()));
+    }
+
+    pub fn boundingBox(self: *HittableList) AABB {
+        return self.bbox;
     }
 
     pub fn hit(self: *HittableList, r: *Ray, ray_t: IntervalF32) ?HitRecord {

@@ -1,5 +1,6 @@
 const zm = @import("zmath");
 
+const AABB = @import("../AABB.zig");
 const IntervalF32 = @import("../interval.zig").IntervalF32;
 const Ray = @import("../Ray.zig");
 const HitRecord = @import("../hittable.zig").HitRecord;
@@ -12,15 +13,31 @@ radius: f32,
 mat: *Material,
 is_moving: bool = false,
 center_vec: zm.Vec = zm.f32x4s(0),
+bbox: ?AABB = null,
 
-pub fn initMoving(center1: zm.Vec, center2: zm.Vec, radius: f32, mat: *Material) Sphere {
-    return .{
+pub fn initMoving(center1: zm.Vec, center2: zm.Vec, radius: f32, mat: Material) Sphere {
+    const rvec = zm.f32x4s(radius);
+    const box1 = AABB.initP(center1 - rvec, center1 + rvec);
+    const box2 = AABB.initP(center2 - rvec, center2 + rvec);
+
+    return Sphere{
         .center = center1,
         .radius = @max(0, radius),
         .mat = mat,
         .is_moving = true,
         .center_vec = center2 - center1,
+        .bbox = AABB.initAB(&box1, &box2),
     };
+}
+
+pub fn boundingBox(self: *Sphere) AABB {
+    if (self.bbox) |bbox| {
+        return bbox;
+    } else {
+        const rvec = zm.f32x4s(self.radius);
+        self.bbox = AABB.initP(self.center - rvec, self.center + rvec);
+        return self.bbox.?;
+    }
 }
 
 pub fn hit(self: *Sphere, r: *Ray, ray_t: IntervalF32) ?HitRecord {
