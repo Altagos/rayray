@@ -34,6 +34,7 @@ const Node = struct {
 
         if (object_span == 1) {
             self.hittable = objects[0];
+            self.bbox = AABB.initAB(&self.bbox, &objects[0].boundingBox());
             // std.log.info("Node.hittable = .{?}", .{self.hittable});
             return;
         }
@@ -67,6 +68,8 @@ const Node = struct {
         self.left = left;
         self.right = right;
 
+        self.combineBbox();
+
         // std.log.info("Node created", .{});
     }
 
@@ -90,19 +93,27 @@ const Node = struct {
             return @constCast(&object).hit(r, ray_t);
         }
 
+        var rec: ?HitRecord = null;
         if (self.left) |left| {
-            if (left.hit(r, ray_t)) |rec| {
-                return rec;
+            if (left.hit(r, ray_t)) |res| {
+                rec = res;
             }
         }
 
         if (self.right) |right| {
-            if (right.hit(r, ray_t)) |rec| {
-                return rec;
+            const interval = blk: {
+                if (rec) |rec_| {
+                    break :blk IntervalF32.init(ray_t.min, rec_.t);
+                }
+                break :blk ray_t;
+            };
+
+            if (right.hit(r, interval)) |res| {
+                rec = res;
             }
         }
 
-        return null;
+        return rec;
     }
 
     pub fn print(self: *Node, depth: usize, side: u8) void {
@@ -120,6 +131,16 @@ const Node = struct {
         if (self.left) |left| left.print(depth + 1, 1);
         if (self.right) |right| right.print(depth + 1, 2);
     }
+
+    fn combineBbox(self: *Node) void {
+        var left = AABB{};
+        var right = AABB{};
+
+        if (self.left) |l| left = l.bbox;
+        if (self.right) |r| right = r.bbox;
+
+        self.bbox = AABB.initAB(&left, &right);
+    }
 };
 
 allocator: std.mem.Allocator,
@@ -133,7 +154,7 @@ pub fn init(allocator: std.mem.Allocator, objects: hittable.HittableList) !BVH {
     try root.init(allocator, objects.list.items);
     defer @constCast(&objects).deinit();
 
-    root.print(0, 0);
+    // root.print(0, 0);
 
     return .{
         .allocator = allocator,

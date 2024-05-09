@@ -39,7 +39,7 @@ pub fn main() !void {
     // Raytracing part
     var raytracer = try rayray.Raytracer.init(allocator, scence.world, .{
         .aspect_ratio = 16.0 / 9.0,
-        .image_width = 400,
+        .image_width = 800,
         .samples_per_pixel = 100,
         .max_depth = 50,
 

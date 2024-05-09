@@ -56,15 +56,15 @@ pub fn scene(allocator: std.mem.Allocator) !@This() {
 
     const material1 = try allocator.create(Material);
     material1.* = Material.dielectric(1.5);
-    try world.add(Hittable.sphere("One", Sphere{ .center = zm.f32x4(0, 1, 0, 0), .radius = 1, .mat = material1 }));
+    try world.add(Hittable.sphere("One: Dielectric", Sphere{ .center = zm.f32x4(0, 1, 0, 0), .radius = 1, .mat = material1 }));
 
     const material2 = try allocator.create(Material);
     material2.* = Material.lambertian(zm.f32x4(0.4, 0.2, 0.1, 1));
-    try world.add(Hittable.sphere("Two", Sphere{ .center = zm.f32x4(-4, 1, 0, 0), .radius = 1, .mat = material2 }));
+    try world.add(Hittable.sphere("Two: Lambertian", Sphere{ .center = zm.f32x4(-4, 1, 0, 0), .radius = 1, .mat = material2 }));
 
     const material3 = try allocator.create(Material);
     material3.* = Material.metal(zm.f32x4(0.7, 0.6, 0.5, 1), 0);
-    try world.add(Hittable.sphere("Three", Sphere{ .center = zm.f32x4(4, 1, 0, 0), .radius = 1, .mat = material3 }));
+    try world.add(Hittable.sphere("Three: Metal", Sphere{ .center = zm.f32x4(4, 1, 0, 0), .radius = 1, .mat = material3 }));
 
     return .{ .allocator = allocator, .world = world };
 }
