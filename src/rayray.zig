@@ -25,7 +25,7 @@ pub const Raytracer = struct {
     thread_pool: *std.Thread.Pool,
 
     camera: Camera,
-    world: hittable.HittableList,
+    world: hittable.BVH,
 
     pub fn init(allocator: std.mem.Allocator, world: hittable.HittableList, camera_opts: Camera.Options) !Self {
         var thread_pool = try allocator.create(std.Thread.Pool);
@@ -35,7 +35,7 @@ pub const Raytracer = struct {
             .allocator = allocator,
             .thread_pool = thread_pool,
             .camera = try Camera.init(allocator, camera_opts),
-            .world = world,
+            .world = try hittable.BVH.init(allocator, world),
         };
     }
 

@@ -18,12 +18,12 @@ const log = std.log.scoped(.tracer);
 
 pub const Context = struct {
     cam: *Camera,
-    world: *hittable.HittableList,
+    world: *hittable.BVH,
     height: IntervalUsize,
     width: IntervalUsize,
 };
 
-pub fn rayColor(r: *Ray, world: *hittable.HittableList, depth: usize) zm.Vec {
+pub fn rayColor(r: *Ray, world: *hittable.BVH, depth: usize) zm.Vec {
     if (depth <= 0) return zm.f32x4(0, 0, 0, 1.0);
 
     if (world.hit(r, .{ .min = 0.001, .max = std.math.inf(f32) })) |rec| {

@@ -25,35 +25,31 @@ pub const HitRecord = struct {
 };
 
 pub const Hittable = union(enum) {
-    sphere: Sphere,
-    bvh_node: BVH,
+    sphere: struct {Sphere, []const u8},
 
-    pub fn sphere(s: Sphere) Hittable {
+    pub fn sphere(name: []const u8, s: Sphere) Hittable {
         // std.log.info("created sphere with mat: {}", .{s.mat});
-        return .{ .sphere = s };
-    }
-
-    pub fn bvh(b: BVH) Hittable {
-        return .{ .bvh_node = b };
+        return .{ .sphere = .{ s, name }};
     }
 
     pub fn boundingBox(self: *Hittable) AABB {
         switch (self.*) {
-            .sphere => |*s| return s.boundingBox(),
-            .bvh_node => |*s| return s.boundingBox(),
+            .sphere => |*s| return s[0].boundingBox(),
+        }
+    }
+
+    pub fn getName(self: *Hittable) []const u8 {
+        switch (self.*) {
+            .sphere => |*s| return s[1],
         }
     }
 
     pub fn hit(self: *Hittable, r: *Ray, ray_t: IntervalF32) ?HitRecord {
         switch (self.*) {
             .sphere => |*s| {
-                std.log.debug("try to hit Sphere: {}", .{s});
+                // std.log.debug("try to hit Sphere: {}", .{s});
                 // std.log.info("hitting sphere with mat: {}", .{s.mat});
-                return s.hit(r, ray_t);
-            },
-            .bvh_node => |*s| {
-                // std.log.debug("try to hit BVH", .{});
-                return s.hit(r, ray_t);
+                return s[0].hit(r, ray_t);
             },
         }
 

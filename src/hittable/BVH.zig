@@ -10,88 +10,155 @@ const util = @import("../util.zig");
 
 pub const BVH = @This();
 
-objects: *hittable.HittableList,
-left: *Hittable,
-right: *Hittable,
-bbox: AABB,
+const Node = struct {
+    left: ?*Node = null,
+    right: ?*Node = null,
+    bbox: AABB = AABB{},
+    hittable: ?Hittable = null,
 
-pub fn initL(objects: *hittable.HittableList) BVH {
-    std.log.info("starting to create BVH", .{});
-    return BVH.init(objects, 0, objects.list.items.len);
-}
-
-pub fn init(objects: *hittable.HittableList, start: usize, end: usize) BVH {
-    const list = objects.list.items;
-    var bbox = AABB{};
-    for (start..end) |idx| {
-        bbox = AABB.initAB(&bbox, &list[idx].boundingBox());
-    }
-
-    const axis = bbox.longestAxis();
-
-    // const comparator = blk: {
-    //     if (axis == 0) {
-    //         break :blk &boxXCompare;
-    //     } else if (axis == 1) {
-    //         break :blk &boxYCompare;
-    //     }
-    //     break :blk &boxZCompare;
-    // };
-
-    const object_span = end - start;
-
-    var left = &list[start];
-    var right = &list[start];
-    if (object_span == 2) {
-        left = &list[start];
-        right = &list[start + 1];
-    } else if (object_span > 2) {
-        std.log.debug("BVH.init axis={} start={} end={}", .{axis, start, end});
-        if (axis == 0) {
-            // break :blk&boxXCompare;
-            std.mem.sort(Hittable, list, .{}, boxXCompare);
-        } else if (axis == 1) {
-            // break :blk &boxYCompare;
-            std.mem.sort(Hittable, list, .{}, boxYCompare);
-        } else {
-            // break :blk &boxZCompare;
-            std.mem.sort(Hittable, list, .{}, boxZCompare);
+    // pub fn add(self: *Node, allocator: std.mem.Allocator, object: *Hittable) void {}
+    //
+    pub fn init(
+        self: *Node,
+        allocator: std.mem.Allocator,
+        objects: []hittable.Hittable,
+        // start: usize,
+        // end: usize,
+    ) !void {
+        for (0..objects.len) |idx| {
+            self.bbox = AABB.initAB(&self.bbox, &objects[idx].boundingBox());
         }
-        // std.mem.sort(Hittable, list, null, comparator);
 
-        const mid = start + object_span / 2;
-        left = @constCast(&Hittable.bvh(BVH.init(objects, start, mid)));
-        right = @constCast(&Hittable.bvh(BVH.init(objects, mid, end)));
+        const axis = self.bbox.longestAxis();
+        const object_span = objects.len;
+
+        if (object_span == 1) {
+            self.hittable = objects[0];
+            // std.log.info("Node.hittable = .{?}", .{self.hittable});
+            return;
+        }
+
+        var left = try allocator.create(Node);
+        var right = try allocator.create(Node);
+
+        // if (object_span == 2) {
+        //     try left.init(allocator, objects, start, start + 1);
+        //     try right.init(allocator, objects, start + 1, start + 2);
+        // } else
+        if (object_span >= 2) {
+            // std.log.debug("Node.init axis={} start={} end={}", .{ axis, start, end });
+            if (axis == 0) {
+                // break :blk&boxXCompare;
+                std.mem.sort(Hittable, objects, .{}, boxXCompare);
+            } else if (axis == 1) {
+                // break :blk &boxYCompare;
+                std.mem.sort(Hittable, objects, .{}, boxYCompare);
+            } else {
+                // break :blk &boxZCompare;
+                std.mem.sort(Hittable, objects, .{}, boxZCompare);
+            }
+            // std.mem.sort(Hittable, list, null, comparator);
+
+            const mid = object_span / 2;
+            try left.init(allocator, objects[0..mid]);
+            try right.init(allocator, objects[mid..]);
+        }
+
+        self.left = left;
+        self.right = right;
+
+        // std.log.info("Node created", .{});
     }
 
-    std.log.info("BVH created", .{});
+    pub fn deinit(self: *Node, allocator: std.mem.Allocator) void {
+        if (self.left) |l| {
+            l.deinit(allocator);
+            allocator.destroy(l);
+        }
+        if (self.right) |r| {
+            r.deinit(allocator);
+            allocator.destroy(r);
+        }
+    }
 
-    return .{
-        .objects = objects,
-        .left = left,
-        .right = right,
-        .bbox = bbox,
-    };
-}
+    pub fn hit(self: *Node, r: *Ray, ray_t: IntervalF32) ?HitRecord {
+        if (!self.bbox.hit(r, ray_t)) {
+            return null;
+        }
 
-pub fn hit(self: *BVH, r: *Ray, ray_t: IntervalF32) ?HitRecord {
-    if (!self.bbox.hit(r, ray_t)) {
+        if (self.hittable) |object| {
+            return @constCast(&object).hit(r, ray_t);
+        }
+
+        if (self.left) |left| {
+            if (left.hit(r, ray_t)) |rec| {
+                return rec;
+            }
+        }
+
+        if (self.right) |right| {
+            if (right.hit(r, ray_t)) |rec| {
+                return rec;
+            }
+        }
+
         return null;
     }
 
-    if (self.left.hit(r, ray_t)) |rec| return rec;
-    if (self.right.hit(r, ray_t)) |rec| return rec;
-    return null;
+    pub fn print(self: *Node, depth: usize, side: u8) void {
+        for (0..depth) |_| std.debug.print("  ", .{});
+
+        if (side == 1) {
+            std.debug.print("Left = ", .{});
+        } else if (side >= 2) {
+            std.debug.print("Right = ", .{});
+        }
+
+        const has_hit = if (self.hittable) |h| @constCast(&h).getName() else "Ast";
+        std.debug.print("Node hittable={s}\n", .{has_hit});
+
+        if (self.left) |left| left.print(depth + 1, 1);
+        if (self.right) |right| right.print(depth + 1, 2);
+    }
+};
+
+allocator: std.mem.Allocator,
+// objects: hittable.HittableList,
+root: Node,
+
+pub fn init(allocator: std.mem.Allocator, objects: hittable.HittableList) !BVH {
+    std.log.info("Creating BVH Tree with {} objects", .{objects.list.items.len});
+    // return BVH.init(objects, 0, objects.list.items.len);
+    var root = Node{};
+    try root.init(allocator, objects.list.items);
+    defer @constCast(&objects).deinit();
+
+    root.print(0, 0);
+
+    return .{
+        .allocator = allocator,
+        // .objects = objects,
+        .root = root,
+    };
+}
+
+pub fn deinit(self: *BVH) void {
+    self.root.deinit(self.allocator);
+    // self.objects.deinit();
+}
+
+pub fn hit(self: *BVH, r: *Ray, ray_t: IntervalF32) ?HitRecord {
+    return self.root.hit(r, ray_t);
 }
 
 pub fn boundingBox(self: *BVH) AABB {
-    return self.bbox;
+    return self.root.bbox;
 }
 
 fn boxCompare(a: *Hittable, b: *Hittable, axis_index: i32) bool {
     const a_axis_interval = a.boundingBox().axisInterval(axis_index);
     const b_axis_interval = b.boundingBox().axisInterval(axis_index);
-    return a_axis_interval.min < b_axis_interval.min;
+    return a_axis_interval.min > b_axis_interval.min;
 }
 
 fn boxXCompare(_: @TypeOf(.{}), a: Hittable, b: Hittable) bool {
