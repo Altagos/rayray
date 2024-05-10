@@ -4,6 +4,7 @@ const spall = @import("spall");
 const zigimg = @import("zigimg");
 const color = zigimg.color;
 
+pub const BVH = @import("BVH.zig");
 pub const Camera = @import("Camera.zig");
 pub const hittable = @import("hittable.zig");
 const IntervalUsize = @import("interval.zig").IntervalUsize;
@@ -25,7 +26,7 @@ pub const Raytracer = struct {
     thread_pool: *std.Thread.Pool,
 
     camera: Camera,
-    world: hittable.BVH,
+    world: BVH,
 
     pub fn init(allocator: std.mem.Allocator, world: hittable.HittableList, camera_opts: Camera.Options) !Self {
         var thread_pool = try allocator.create(std.Thread.Pool);
@@ -35,7 +36,7 @@ pub const Raytracer = struct {
             .allocator = allocator,
             .thread_pool = thread_pool,
             .camera = try Camera.init(allocator, camera_opts),
-            .world = try hittable.BVH.init(allocator, world),
+            .world = try BVH.init(allocator, world),
         };
     }
 

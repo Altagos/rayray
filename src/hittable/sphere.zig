@@ -15,7 +15,7 @@ is_moving: bool = false,
 center_vec: zm.Vec = zm.f32x4s(0),
 bbox: ?AABB = null,
 
-pub fn initMoving(center1: zm.Vec, center2: zm.Vec, radius: f32, mat: Material) Sphere {
+pub fn initMoving(center1: zm.Vec, center2: zm.Vec, radius: f32, mat: *Material) Sphere {
     const rvec = zm.f32x4s(radius);
     const box1 = AABB.initP(center1 - rvec, center1 + rvec);
     const box2 = AABB.initP(center2 - rvec, center2 + rvec);

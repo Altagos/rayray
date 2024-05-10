@@ -38,7 +38,8 @@ pub fn scene(allocator: std.mem.Allocator) !@This() {
                     // diffuse
                     const albedo = rayray.util.randomVec3() * rayray.util.randomVec3() + zm.f32x4(0, 0, 0, 1);
                     material.* = Material.lambertian(albedo);
-                    try world.add(Hittable.sphere("Lambertian", Sphere{ .center = center, .radius = 0.2, .mat = material }));
+                    const center2 = center + zm.f32x4(0, rayray.util.randomF32M(0, 0.5), 0, 0);
+                    try world.add(Hittable.sphere("Lambertian", Sphere.initMoving(center, center2, 0.2, material)));
                 } else if (choose_mat < 0.95) {
                     // metal
                     const albedo = rayray.util.randomVec3M(0.5, 1) + zm.f32x4(0, 0, 0, 1);

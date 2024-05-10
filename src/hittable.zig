@@ -9,7 +9,6 @@ const Ray = @import("Ray.zig");
 
 // Hittable Objects
 pub const Sphere = @import("hittable/Sphere.zig");
-pub const BVH = @import("hittable/BVH.zig");
 
 pub const HitRecord = struct {
     p: zm.Vec,
@@ -25,11 +24,11 @@ pub const HitRecord = struct {
 };
 
 pub const Hittable = union(enum) {
-    sphere: struct {Sphere, []const u8},
+    sphere: struct { Sphere, []const u8 },
 
     pub fn sphere(name: []const u8, s: Sphere) Hittable {
         // std.log.info("created sphere with mat: {}", .{s.mat});
-        return .{ .sphere = .{ s, name }};
+        return .{ .sphere = .{ s, name } };
     }
 
     pub fn boundingBox(self: *Hittable) AABB {
@@ -44,7 +43,7 @@ pub const Hittable = union(enum) {
         }
     }
 
-    pub fn hit(self: *Hittable, r: *Ray, ray_t: IntervalF32) ?HitRecord {
+    pub inline fn hit(self: *Hittable, r: *Ray, ray_t: IntervalF32) ?HitRecord {
         switch (self.*) {
             .sphere => |*s| {
                 // std.log.debug("try to hit Sphere: {}", .{s});
