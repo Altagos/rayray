@@ -194,9 +194,10 @@ pub inline fn hit(self: *BVH, r: *Ray, ray_t: IntervalF32) ?HitRecord {
 }
 
 inline fn boxCompare(a: *Hittable, b: *Hittable, axis_index: i32) bool {
+    @setFloatMode(std.builtin.FloatMode.optimized);
     const a_axis_interval = a.boundingBox().axisInterval(axis_index);
     const b_axis_interval = b.boundingBox().axisInterval(axis_index);
-    return a_axis_interval.min <= b_axis_interval.min;
+    return a_axis_interval.min < b_axis_interval.min;
 }
 
 fn boxXCompare(_: @TypeOf(.{}), a: Hittable, b: Hittable) bool {

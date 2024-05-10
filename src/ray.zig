@@ -1,5 +1,3 @@
-const std = @import("std");
-
 const zm = @import("zmath");
 
 const Ray = @This();
@@ -24,6 +22,6 @@ pub fn initT(origin: zm.Vec, direction: zm.Vec, tm: f32) Ray {
     };
 }
 
-pub fn at(self: *Ray, t: f32) zm.Vec {
+pub inline fn at(self: *Ray, t: f32) zm.Vec {
     return self.orig + zm.f32x4s(t) * self.dir;
 }

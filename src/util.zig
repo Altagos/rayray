@@ -77,7 +77,7 @@ pub inline fn randomOnHemisphere(normal: zm.Vec) zm.Vec {
         -on_unit_sphere;
 }
 
-pub fn nearZero(e: zm.Vec) bool {
+pub inline fn nearZero(e: zm.Vec) bool {
     const s = 1e-8;
     return (@abs(e[0]) < s) and (@abs(e[1]) < s) and (@abs(e[2]) < s);
 }

@@ -25,7 +25,8 @@ pub const Context = struct {
 };
 
 pub fn rayColor(r: *Ray, world: *BVH, depth: usize) zm.Vec {
-    if (depth <= 0) return zm.f32x4(0, 0, 0, 1.0);
+    @setFloatMode(.optimized);
+    if (depth == 0) return zm.f32x4(0, 0, 0, 1.0);
 
     if (world.hit(r, .{ .min = 0.001, .max = std.math.inf(f32) })) |rec| {
         var attenuation = zm.f32x4s(1.0);
@@ -59,23 +60,19 @@ pub fn trace(ctx: Context) void {
     }
 }
 
-fn vecToRgba(v: zm.Vec, samples_per_pixel: usize) zigimg.color.Rgba32 {
-    const scale: f32 = 1.0 / @as(f32, @floatFromInt(samples_per_pixel));
-    const intensity = IntervalF32.init(0.0, 0.999);
+inline fn vecToRgba(v: zm.Vec, samples_per_pixel: usize) zigimg.color.Rgba32 {
+    var rgba = linearToGamma(zm.Vec, v / zm.f32x4s(@as(f32, @floatFromInt(samples_per_pixel))));
+    rgba = zm.clampFast(rgba, zm.f32x4s(0.0), zm.f32x4s(0.999));
+    rgba = rgba * zm.f32x4s(256);
 
-    const r_scaled = linearToGamma(v[0] * scale);
-    const g_scaled = linearToGamma(v[1] * scale);
-    const b_scaled = linearToGamma(v[2] * scale);
-    const a_scaled = linearToGamma(v[3] * scale);
-
-    const r: u8 = @intFromFloat(256 * intensity.clamp(r_scaled));
-    const g: u8 = @intFromFloat(256 * intensity.clamp(g_scaled));
-    const b: u8 = @intFromFloat(256 * intensity.clamp(b_scaled));
-    const a: u8 = @intFromFloat(256 * intensity.clamp(a_scaled));
-
-    return zigimg.color.Rgba32.initRgba(r, g, b, a);
+    return zigimg.color.Rgba32.initRgba(
+        @intFromFloat(rgba[0]),
+        @intFromFloat(rgba[1]),
+        @intFromFloat(rgba[2]),
+        @intFromFloat(rgba[3]),
+    );
 }
 
-inline fn linearToGamma(linear_component: f32) f32 {
+inline fn linearToGamma(comptime T: type, linear_component: T) T {
     return @sqrt(linear_component);
 }

@@ -93,8 +93,6 @@ pub const Raytracer = struct {
                 .width = c_width,
             };
 
-            // log.debug("Spawning chunk: {}, row start: {}, col start: {}", .{ id, row, col });
-
             try self.thread_pool.spawn(
                 renderThread,
                 .{ ctx, t, id },
