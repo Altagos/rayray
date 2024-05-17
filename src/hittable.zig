@@ -33,7 +33,7 @@ pub const Hittable = union(enum) {
 
     pub fn boundingBox(self: *Hittable) AABB {
         switch (self.*) {
-            .sphere => |*s| return s[0].boundingBox(),
+            inline else => |*n| return n[0].boundingBox(),
         }
     }
 
@@ -45,14 +45,8 @@ pub const Hittable = union(enum) {
 
     pub inline fn hit(self: *Hittable, r: *Ray, ray_t: IntervalF32) ?HitRecord {
         switch (self.*) {
-            .sphere => |*s| {
-                // std.log.debug("try to hit Sphere: {}", .{s});
-                // std.log.info("hitting sphere with mat: {}", .{s.mat});
-                return s[0].hit(r, ray_t);
-            },
+            inline else => |*n| return n[0].hit(r, ray_t),
         }
-
-        return null;
     }
 };
 

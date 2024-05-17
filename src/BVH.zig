@@ -109,8 +109,7 @@ const Node = union(enum) {
         }
 
         switch (self.*) {
-            .ast => |*a| return a.hit(r, ray_t),
-            .leaf => |*l| return l.hit(r, ray_t),
+            inline else => |*n| return n.hit(r, ray_t),
         }
     }
 

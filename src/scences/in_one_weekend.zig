@@ -1,12 +1,11 @@
 const std = @import("std");
 
-const zm = @import("zmath");
-
 const rayray = @import("rayray");
 const Hittable = rayray.hittable.Hittable;
 const HittableList = rayray.hittable.HittableList;
 const Material = rayray.material.Material;
 const Sphere = rayray.hittable.Sphere;
+const zm = rayray.zmath;
 
 world: HittableList,
 allocator: std.mem.Allocator,
@@ -18,10 +17,10 @@ pub fn scene(allocator: std.mem.Allocator) !@This() {
     material_ground.* = Material.lambertian(zm.f32x4(0.5, 0.5, 0.5, 1.0));
     try world.add(Hittable.sphere("Ground", Sphere{ .center = zm.f32x4(0, -1000, 0, 0), .radius = 1000, .mat = material_ground }));
 
-    var a: isize = -22;
-    while (a < 22) : (a += 1) {
+    var a: isize = -33;
+    while (a < 11) : (a += 1) {
         var b: isize = -22;
-        while (b < 22) : (b += 1) {
+        while (b < 7) : (b += 1) {
             const choose_mat = rayray.util.randomF32();
             const center = zm.f32x4(
                 @as(f32, @floatFromInt(a)) + 0.9 * rayray.util.randomF32(),

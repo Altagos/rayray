@@ -9,7 +9,7 @@ pub fn build(b: *std.Build) void {
         .enable = enable_spall,
     });
 
-    const strip = b.option(bool, "strip", "") orelse false;
+    const strip = b.option(bool, "strip", "") orelse (optimize != .Debug);
 
     const rayray = b.addModule("rayray", .{
         .root_source_file = .{ .path = "src/rayray.zig" },
@@ -30,9 +30,14 @@ pub fn build(b: *std.Build) void {
     });
     exe.root_module.strip = strip;
 
-    addDeps(b, &exe.root_module);
+    // addDeps(b, &exe.root_module);
     exe.root_module.addImport("spall", spall.module("spall"));
     exe.root_module.addImport("rayray", rayray);
+
+    const alib = b.dependency("a", .{
+        .log_ignore_default = true,
+    });
+    exe.root_module.addImport("a", alib.module("a"));
 
     b.installArtifact(exe);
 
@@ -48,16 +53,14 @@ pub fn build(b: *std.Build) void {
 }
 
 fn addDeps(b: *std.Build, module: *std.Build.Module) void {
-    const alib = b.dependency("a", .{
-        .log_ignore_default = true,
-    });
-    module.addImport("a", alib.module("a"));
-
     const zmath = b.dependency("zmath", .{
-        .enable_cross_platform_determinism = true,
+        .optimize = .ReleaseFast,
+        .enable_cross_platform_determinism = false,
     });
     module.addImport("zmath", zmath.module("root"));
 
-    const zigimg = b.dependency("zigimg", .{});
+    const zigimg = b.dependency("zigimg", .{
+        .optimize = .ReleaseFast,
+    });
     module.addImport("zigimg", zigimg.module("zigimg"));
 }

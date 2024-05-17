@@ -2,13 +2,13 @@ const std = @import("std");
 
 const aa = @import("a");
 const spall = @import("spall");
-const zm = @import("zmath");
 
 const rayray = @import("rayray");
 const Hittable = rayray.hittable.Hittable;
 const HittableList = rayray.hittable.HittableList;
 const Material = rayray.material.Material;
 const Sphere = rayray.hittable.Sphere;
+const zm = rayray.zmath;
 
 const scences = @import("scences.zig");
 
@@ -39,16 +39,16 @@ pub fn main() !void {
     // Raytracing part
     var raytracer = try rayray.Raytracer.init(allocator, scence.world, .{
         .aspect_ratio = 16.0 / 9.0,
-        .image_width = 400,
-        .samples_per_pixel = 100,
-        .max_depth = 50,
+        .image_width = 4000,
+        .samples_per_pixel = 500,
+        .max_depth = 100,
 
         .vfov = 20,
-        .look_from = zm.f32x4(13, 2, 3, 0),
+        .look_from = zm.f32x4(20, 6, 6, 0),
         .look_at = zm.f32x4(0, 0, 0, 0),
 
         .defocus_angle = 0.6,
-        .focus_dist = 10,
+        .focus_dist = 18,
     });
     defer raytracer.deinit();
 

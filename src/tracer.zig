@@ -60,10 +60,14 @@ pub fn trace(ctx: Context) void {
     }
 }
 
+const zero = zm.f32x4s(0.0);
+const nearly_one = zm.f32x4s(0.999);
+const v256 = zm.f32x4s(256);
+
 inline fn vecToRgba(v: zm.Vec, samples_per_pixel: usize) zigimg.color.Rgba32 {
-    var rgba = linearToGamma(zm.Vec, v / zm.f32x4s(@as(f32, @floatFromInt(samples_per_pixel))));
-    rgba = zm.clampFast(rgba, zm.f32x4s(0.0), zm.f32x4s(0.999));
-    rgba = rgba * zm.f32x4s(256);
+    var rgba = zm.sqrt(v / zm.f32x4s(@as(f32, @floatFromInt(samples_per_pixel)))); // linear to gamma
+    rgba = zm.clampFast(rgba, zero, nearly_one);
+    rgba = rgba * v256;
 
     return zigimg.color.Rgba32.initRgba(
         @intFromFloat(rgba[0]),
@@ -71,8 +75,4 @@ inline fn vecToRgba(v: zm.Vec, samples_per_pixel: usize) zigimg.color.Rgba32 {
         @intFromFloat(rgba[2]),
         @intFromFloat(rgba[3]),
     );
-}
-
-inline fn linearToGamma(comptime T: type, linear_component: T) T {
-    return @sqrt(linear_component);
 }

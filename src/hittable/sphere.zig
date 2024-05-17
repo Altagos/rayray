@@ -56,7 +56,7 @@ pub inline fn hit(self: *Sphere, r: *Ray, ray_t: IntervalF32) ?HitRecord {
     const discriminant = half_b * half_b - a * c;
     if (discriminant < 0) return null;
 
-    const sqrtd = @sqrt(discriminant);
+    const sqrtd = zm.sqrt(discriminant);
 
     // Find the nearest root that lies in the acceptable range
     var root = (-half_b - sqrtd) / a;

@@ -1,5 +1,7 @@
 const std = @import("std");
 
+pub const zmath = @import("zmath");
+
 const spall = @import("spall");
 const zigimg = @import("zigimg");
 const color = zigimg.color;
@@ -7,7 +9,8 @@ const color = zigimg.color;
 pub const BVH = @import("BVH.zig");
 pub const Camera = @import("Camera.zig");
 pub const hittable = @import("hittable.zig");
-const IntervalUsize = @import("interval.zig").IntervalUsize;
+pub const interval = @import("interval.zig");
+const IntervalUsize = interval.IntervalUsize;
 pub const material = @import("material.zig");
 pub const tracer = @import("tracer.zig");
 pub const util = @import("util.zig");
@@ -105,10 +108,11 @@ pub const Raytracer = struct {
             .terminal = stderr,
             .supports_ansi_escape_codes = true,
         };
-
         var node = progress.start("Rendered Chunks", num_chunks);
         node.setCompletedItems(0);
         node.context.refresh();
+
+        var completed_chunks: u64 = 0;
 
         while (true) {
             var done = true;
@@ -119,7 +123,8 @@ pub const Raytracer = struct {
                 if (task_done and !t.marked_as_done) {
                     t.marked_as_done = true;
                     node.completeOne();
-                    try self.camera.image.writeToFilePath("./out/out.png", .{ .png = .{} });
+                    completed_chunks += 1;
+                    if (completed_chunks % self.thread_pool.threads.len == 0) try self.camera.image.writeToFilePath("./out/out.png", .{ .png = .{} });
                 } else if (!task_done) {
                     done = false;
                 }
