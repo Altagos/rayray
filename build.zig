@@ -4,34 +4,34 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const enable_spall = b.option(bool, "enable_spall", "Enable spall profiling") orelse false;
-    const spall = b.dependency("spall", .{
-        .enable = enable_spall,
-    });
+    // const enable_spall = b.option(bool, "enable_spall", "Enable spall profiling") orelse false;
+    // const spall = b.dependency("spall", .{
+    //     .enable = enable_spall,
+    // });
 
     const strip = b.option(bool, "strip", "") orelse (optimize != .Debug);
 
     const rayray = b.addModule("rayray", .{
-        .root_source_file = .{ .path = "src/rayray.zig" },
+        .root_source_file = b.path("src/rayray.zig"),
         .target = target,
         .optimize = optimize,
     });
     rayray.strip = strip;
 
-    rayray.addImport("spall", spall.module("spall"));
+    // rayray.addImport("spall", spall.module("spall"));
 
     addDeps(b, rayray);
 
     const exe = b.addExecutable(.{
         .name = "rayray",
-        .root_source_file = .{ .path = "src/main.zig" },
+        .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
     });
     exe.root_module.strip = strip;
 
     // addDeps(b, &exe.root_module);
-    exe.root_module.addImport("spall", spall.module("spall"));
+    // exe.root_module.addImport("spall", spall.module("spall"));
     exe.root_module.addImport("rayray", rayray);
 
     const alib = b.dependency("a", .{

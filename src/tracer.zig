@@ -40,6 +40,7 @@ pub fn rayColor(r: *Ray, world: *BVH, depth: usize) zm.Vec {
     const unit_direction = zm.normalize3(r.dir);
     const a = 0.5 * (unit_direction[1] + 1.0);
     return zm.f32x4s(1.0 - a) * zm.f32x4s(1.0) + zm.f32x4s(a) * zm.f32x4(0.5, 0.7, 1.0, 1.0);
+    // return zm.f32x4s(1.0);
 }
 
 pub fn trace(ctx: Context) void {

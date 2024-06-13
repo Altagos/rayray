@@ -35,7 +35,25 @@ const Ast = struct {
     }
 };
 
-const Leaf = Hittable;
+const Leaf = struct {
+    objects: []Hittable,
+    bbox: AABB,
+
+    pub inline fn hit(self: *Leaf, r: *Ray, ray_t: IntervalF32) ?HitRecord {
+        var rec: ?HitRecord = null;
+        var interval = ray_t;
+        for (self.objects) |obj| {
+            if (@constCast(&obj).hit(r, interval)) |res| {
+                interval = IntervalF32.init(ray_t.min, res.t);
+                rec = res;
+            }
+        }
+        return rec;
+    }
+};
+
+threadlocal var reached_depth: usize = 0;
+threadlocal var max_objects: usize = 0;
 
 const Node = union(enum) {
     ast: Ast,
@@ -44,22 +62,24 @@ const Node = union(enum) {
     pub fn init(
         self: *Node,
         allocator: std.mem.Allocator,
-        objects: []hittable.Hittable,
+        objects: []Hittable,
+        max_depth: usize,
+        depth: usize,
     ) !void {
-        if (objects.len == 1) {
-            self.* = .{ .leaf = objects[0] };
-            return;
-        }
+        if (reached_depth < depth) reached_depth = depth;
 
         var ast_bbox = AABB{};
         for (0..objects.len) |idx| {
             ast_bbox = AABB.initAB(&ast_bbox, &objects[idx].boundingBox());
         }
 
-        const axis = ast_bbox.longestAxis();
+        if (depth >= max_depth or objects.len <= 2) {
+            if (max_objects < objects.len) max_objects = objects.len;
+            self.* = .{ .leaf = .{ .objects = objects, .bbox = ast_bbox } };
+            return;
+        }
 
-        var left = try allocator.create(Node);
-        var right = try allocator.create(Node);
+        const axis = ast_bbox.longestAxis();
 
         if (axis == 0) {
             std.mem.sort(Hittable, objects, .{}, boxXCompare);
@@ -69,9 +89,12 @@ const Node = union(enum) {
             std.mem.sort(Hittable, objects, .{}, boxZCompare);
         }
 
+        var left = try allocator.create(Node);
+        var right = try allocator.create(Node);
+
         const mid = objects.len / 2;
-        try left.init(allocator, objects[0..mid]);
-        try right.init(allocator, objects[mid..]);
+        try left.init(allocator, objects[0..mid], max_depth, depth + 1);
+        try right.init(allocator, objects[mid..], max_depth, depth + 1);
 
         self.* = .{ .ast = .{
             .left = left,
@@ -92,14 +115,16 @@ const Node = union(enum) {
                     allocator.destroy(right);
                 }
             },
-            else => {},
+            .leaf => |*l| {
+                allocator.destroy(&l.objects);
+            },
         }
     }
 
     pub inline fn bbox(self: *Node) AABB {
         switch (self.*) {
             .ast => |*a| return a.bbox,
-            .leaf => |l| return @constCast(&l).boundingBox(),
+            .leaf => |*l| return l.bbox,
         }
     }
 
@@ -115,7 +140,7 @@ const Node = union(enum) {
 
     fn recomputeBbox(self: *Node) AABB {
         switch (self.*) {
-            .leaf => |*l| return l.boundingBox(),
+            .leaf => |*l| return l.bbox,
             .ast => |*a| {
                 var left = AABB{};
                 var right = AABB{};
@@ -145,7 +170,7 @@ const Node = union(enum) {
                 if (a.left) |left| left.print(depth + 1, 1);
                 if (a.right) |right| right.print(depth + 1, 2);
             },
-            .leaf => |*l| std.debug.print("Leaf = {s}\n", .{l.getName()}),
+            .leaf => |*l| std.debug.print("Leafs = {}\n", .{l}),
         }
     }
 
@@ -164,13 +189,15 @@ allocator: std.mem.Allocator,
 root: *Node,
 bbox: AABB,
 
-pub fn init(allocator: std.mem.Allocator, objects: hittable.HittableList) !BVH {
+pub fn init(allocator: std.mem.Allocator, objects: hittable.HittableList, max_depth: usize) !BVH {
     defer @constCast(&objects).deinit();
     std.log.info("Creating BVH Tree with {} objects", .{objects.list.items.len});
 
     const root = try allocator.create(Node);
-    try root.init(allocator, objects.list.items);
+    try root.init(allocator, objects.list.items, max_depth, 0);
     const bbox = root.recomputeBbox();
+
+    std.log.debug("Reached depth of: {}, max objects: {}", .{ reached_depth, max_objects });
 
     // root.print(0, 0);
     return .{

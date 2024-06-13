@@ -2,7 +2,7 @@ const std = @import("std");
 
 pub const zmath = @import("zmath");
 
-const spall = @import("spall");
+// const spall = @import("spall");
 const zigimg = @import("zigimg");
 const color = zigimg.color;
 
@@ -20,6 +20,7 @@ const log = std.log.scoped(.rayray);
 pub const TaskTracker = struct {
     marked_as_done: bool = false,
     done: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
+    thread_id: std.Thread.Id = 0,
 };
 
 pub const Raytracer = struct {
@@ -39,7 +40,7 @@ pub const Raytracer = struct {
             .allocator = allocator,
             .thread_pool = thread_pool,
             .camera = try Camera.init(allocator, camera_opts),
-            .world = try BVH.init(allocator, world),
+            .world = try BVH.init(allocator, world, 100),
         };
     }
 
@@ -52,8 +53,8 @@ pub const Raytracer = struct {
     }
 
     pub fn render(self: *Self) !zigimg.Image {
-        const s = spall.trace(@src(), "Render", .{});
-        defer s.end();
+        // const s = spall.trace(@src(), "Render", .{});
+        // defer s.end();
 
         const chunk_height: usize = 25;
         const chunk_width: usize = 25;
@@ -102,18 +103,33 @@ pub const Raytracer = struct {
             );
         }
 
-        const stderr = std.io.getStdErr();
+        // const stderr = std.io.getStdErr();
 
-        var progress = std.Progress{
-            .terminal = stderr,
-            .supports_ansi_escape_codes = true,
-        };
-        var node = progress.start("Rendered Chunks", num_chunks);
-        node.setCompletedItems(0);
-        node.context.refresh();
+        // var progress = std.Progress{
+        //     .terminal = stderr,
+        //     .supports_ansi_escape_codes = true,
+        // };
+        // var node = progress.start("Rendered Chunks", num_chunks);
+        // node.setCompletedItems(0);
+        // node.context.refresh();
+
+        const num_threads = try std.Thread.getCpuCount();
+        var thread_to_idx = std.ArrayList(std.Thread.Id).init(self.allocator);
+        defer thread_to_idx.deinit();
+
+        var root_node = std.Progress.start(.{
+            .root_name = "Ray Tracer",
+            .estimated_total_items = num_threads,
+        });
+        var nodes = std.ArrayList(std.Progress.Node).init(self.allocator);
+        defer nodes.deinit();
+
+        for (0..num_threads) |_| {
+            try nodes.append(root_node.start("Chunks Rendered", num_chunks / num_threads));
+        }
 
         var completed_chunks: u64 = 0;
-
+        var i: usize = 0;
         while (true) {
             var done = true;
 
@@ -122,7 +138,18 @@ pub const Raytracer = struct {
 
                 if (task_done and !t.marked_as_done) {
                     t.marked_as_done = true;
-                    node.completeOne();
+
+                    const idx = blk: {
+                        for (thread_to_idx.items, 0..) |value, idx| {
+                            if (value == t.thread_id) break :blk idx;
+                        }
+                        try thread_to_idx.append(t.thread_id);
+                        const idx = i;
+                        i += 1;
+                        break :blk idx;
+                    };
+                    nodes.items[idx].completeOne();
+
                     completed_chunks += 1;
                     if (completed_chunks % self.thread_pool.threads.len == 0) try self.camera.image.writeToFilePath("./out/out.png", .{ .png = .{} });
                 } else if (!task_done) {
@@ -133,7 +160,7 @@ pub const Raytracer = struct {
             if (done or !self.thread_pool.is_running) break;
         }
 
-        node.end();
+        // node.end();
 
         return self.camera.image;
     }
@@ -141,6 +168,7 @@ pub const Raytracer = struct {
 
 pub fn renderThread(ctx: tracer.Context, task: *TaskTracker, id: usize) void {
     defer task.done.store(true, .release);
+    task.thread_id = std.Thread.getCurrentId();
     _ = id;
     tracer.trace(ctx);
 }

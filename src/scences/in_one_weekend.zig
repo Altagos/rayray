@@ -17,10 +17,13 @@ pub fn scene(allocator: std.mem.Allocator) !@This() {
     material_ground.* = Material.lambertian(zm.f32x4(0.5, 0.5, 0.5, 1.0));
     try world.add(Hittable.sphere("Ground", Sphere{ .center = zm.f32x4(0, -1000, 0, 0), .radius = 1000, .mat = material_ground }));
 
-    var a: isize = -33;
-    while (a < 11) : (a += 1) {
-        var b: isize = -22;
-        while (b < 7) : (b += 1) {
+    const a_max = 50;
+    const b_max = 50;
+
+    var a: isize = -a_max;
+    while (a < a_max) : (a += 1) {
+        var b: isize = -b_max;
+        while (b < b_max) : (b += 1) {
             const choose_mat = rayray.util.randomF32();
             const center = zm.f32x4(
                 @as(f32, @floatFromInt(a)) + 0.9 * rayray.util.randomF32(),
@@ -55,15 +58,17 @@ pub fn scene(allocator: std.mem.Allocator) !@This() {
 
     const material1 = try allocator.create(Material);
     material1.* = Material.dielectric(1.5);
-    try world.add(Hittable.sphere("One: Dielectric", Sphere{ .center = zm.f32x4(0, 1, 0, 0), .radius = 1, .mat = material1 }));
+    // try world.add(Hittable.sphere("One: Dielectric", Sphere{ .center = zm.f32x4(0, 1, 0, 0), .radius = 1, .mat = material1 }));
 
     const material2 = try allocator.create(Material);
     material2.* = Material.lambertian(zm.f32x4(0.4, 0.2, 0.1, 1));
-    try world.add(Hittable.sphere("Two: Lambertian", Sphere{ .center = zm.f32x4(-4, 1, 0, 0), .radius = 1, .mat = material2 }));
+    try world.add(Hittable.sphere("Two: Lambertian", Sphere{ .center = zm.f32x4(-4, 1, 0, 0), .radius = 1, .mat = material1 }));
 
     const material3 = try allocator.create(Material);
     material3.* = Material.metal(zm.f32x4(0.7, 0.6, 0.5, 1), 0);
     try world.add(Hittable.sphere("Three: Metal", Sphere{ .center = zm.f32x4(4, 1, 0, 0), .radius = 1, .mat = material3 }));
+
+    try world.add(Hittable.sphere("One: Dielectric", Sphere{ .center = zm.f32x4(0, 1, 0, 0), .radius = 1, .mat = material2 }));
 
     return .{ .allocator = allocator, .world = world };
 }
