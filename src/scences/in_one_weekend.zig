@@ -19,6 +19,7 @@ pub fn scene(allocator: std.mem.Allocator) !@This() {
 
     const a_max = 50;
     const b_max = 50;
+    const c = 3.0;
 
     var a: isize = -a_max;
     while (a < a_max) : (a += 1) {
@@ -26,9 +27,9 @@ pub fn scene(allocator: std.mem.Allocator) !@This() {
         while (b < b_max) : (b += 1) {
             const choose_mat = rayray.util.randomF32();
             const center = zm.f32x4(
-                @as(f32, @floatFromInt(a)) + 0.9 * rayray.util.randomF32(),
+                @as(f32, @floatFromInt(a)) / c + 0.9 * rayray.util.randomF32(),
                 0.2,
-                @as(f32, @floatFromInt(b)) + 0.9 * rayray.util.randomF32(),
+                @as(f32, @floatFromInt(b)) / c + 0.9 * rayray.util.randomF32(),
                 0,
             );
 

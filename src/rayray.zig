@@ -1,4 +1,5 @@
 const std = @import("std");
+const build_options = @import("build-options");
 
 pub const zmath = @import("zmath");
 
@@ -40,7 +41,7 @@ pub const Raytracer = struct {
             .allocator = allocator,
             .thread_pool = thread_pool,
             .camera = try Camera.init(allocator, camera_opts),
-            .world = try BVH.init(allocator, world, 100),
+            .world = try BVH.init(allocator, world, build_options.max_depth),
         };
     }
 
@@ -71,13 +72,20 @@ pub const Raytracer = struct {
 
         const num_chunks = cols * rows;
 
+        const num_threads = blk: {
+            const count = try std.Thread.getCpuCount();
+            if (count > 1) {
+                break :blk count - 1;
+            } else break :blk 1;
+        };
+
         log.debug("rows: {}, cols: {}, chunk_height: {}, chunk_width: {}, num_chunks: {}, num_threads: {}", .{
             rows,
             cols,
             chunk_height,
             chunk_width,
             num_chunks,
-            self.thread_pool.threads.len,
+            num_threads,
         });
 
         const tasks = try self.allocator.alloc(TaskTracker, num_chunks);
@@ -113,13 +121,12 @@ pub const Raytracer = struct {
         // node.setCompletedItems(0);
         // node.context.refresh();
 
-        const num_threads = try std.Thread.getCpuCount();
         var thread_to_idx = std.ArrayList(std.Thread.Id).init(self.allocator);
         defer thread_to_idx.deinit();
 
         var root_node = std.Progress.start(.{
             .root_name = "Ray Tracer",
-            .estimated_total_items = num_threads,
+            .estimated_total_items = num_chunks,
         });
         var nodes = std.ArrayList(std.Progress.Node).init(self.allocator);
         defer nodes.deinit();
@@ -151,7 +158,8 @@ pub const Raytracer = struct {
                     nodes.items[idx].completeOne();
 
                     completed_chunks += 1;
-                    if (completed_chunks % self.thread_pool.threads.len == 0) try self.camera.image.writeToFilePath("./out/out.png", .{ .png = .{} });
+                    root_node.setCompletedItems(completed_chunks);
+                    // if (completed_chunks % self.thread_pool.threads.len == 0) try self.camera.image.writeToFilePath("./out/out.png", .{ .png = .{} });
                 } else if (!task_done) {
                     done = false;
                 }

@@ -16,6 +16,8 @@ const Ast = struct {
     bbox: AABB = AABB{},
 
     pub fn hit(self: *Ast, r: *Ray, ray_t: IntervalF32) ?HitRecord {
+        if (!self.bbox.hit(r, ray_t)) return null;
+
         var rec: ?HitRecord = null;
         var interval = ray_t;
         if (self.left) |left| {
@@ -129,12 +131,16 @@ const Node = union(enum) {
     }
 
     pub inline fn hit(self: *Node, r: *Ray, ray_t: IntervalF32) ?HitRecord {
-        if (!@constCast(&self.bbox()).hit(r, ray_t)) {
-            return null;
-        }
+        // if (@constCast(&self.bbox()).hit(r, ray_t)) {
+
+        // }
 
         switch (self.*) {
-            inline else => |*n| return n.hit(r, ray_t),
+            inline else => |*n| if (n.bbox.hit(r, ray_t)) {
+                return n.hit(r, ray_t);
+            } else {
+                return null;
+            },
         }
     }
 
@@ -212,15 +218,14 @@ pub fn deinit(self: *BVH) void {
 }
 
 pub inline fn hit(self: *BVH, r: *Ray, ray_t: IntervalF32) ?HitRecord {
-    if (!self.bbox.hit(r, ray_t)) {
-        return null;
+    if (self.bbox.hit(r, ray_t)) {
+        return self.root.hit(r, ray_t);
     }
 
-    return self.root.hit(r, ray_t);
+    return null;
 }
 
 inline fn boxCompare(a: *Hittable, b: *Hittable, axis_index: i32) bool {
-    @setFloatMode(std.builtin.FloatMode.optimized);
     const a_axis_interval = a.boundingBox().axisInterval(axis_index);
     const b_axis_interval = b.boundingBox().axisInterval(axis_index);
     return a_axis_interval.min < b_axis_interval.min;
