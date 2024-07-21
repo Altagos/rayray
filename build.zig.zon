@@ -6,6 +6,7 @@
     .dependencies = .{
         // libs folder
         .zmath = .{ .path = "libs/zmath" },
+        .ztracy = .{ .path = "libs/ztracy" },
 
         // See `zig fetch --save <url>` for a command-line interface for adding dependencies.
         .a = .{
