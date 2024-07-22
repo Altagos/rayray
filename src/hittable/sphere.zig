@@ -13,7 +13,17 @@ radius: f32,
 mat: *Material,
 is_moving: bool = false,
 center_vec: zm.Vec = zm.f32x4s(0),
-bbox: ?AABB = null,
+bbox: AABB,
+
+pub fn init(center: zm.Vec, radius: f32, mat: *Material) Sphere {
+    const rvec = zm.f32x4s(radius);
+    return Sphere{
+        .center = center,
+        .radius = @max(0, radius),
+        .mat = mat,
+        .bbox = AABB.initP(center - rvec, center + rvec),
+    };
+}
 
 pub fn initMoving(center1: zm.Vec, center2: zm.Vec, radius: f32, mat: *Material) Sphere {
     const rvec = zm.f32x4s(radius);
@@ -31,16 +41,16 @@ pub fn initMoving(center1: zm.Vec, center2: zm.Vec, radius: f32, mat: *Material)
 }
 
 pub inline fn boundingBox(self: *Sphere) AABB {
-    if (self.bbox) |bbox| {
-        return bbox;
-    } else {
-        const rvec = zm.f32x4s(self.radius);
-        self.bbox = AABB.initP(self.center - rvec, self.center + rvec);
-        return self.bbox.?;
-    }
+    // if (self.bbox) |bbox| {
+    return self.bbox;
+    // } else {
+    //     const rvec = zm.f32x4s(self.radius);
+    //     self.bbox = AABB.initP(self.center - rvec, self.center + rvec);
+    //     return self.bbox.?;
+    // }
 }
 
-pub inline fn hit(self: *Sphere, r: *Ray, ray_t: IntervalF32) ?HitRecord {
+pub fn hit(self: *const Sphere, r: *Ray, ray_t: IntervalF32) ?HitRecord {
     const center = blk: {
         if (self.is_moving) {
             break :blk self.sphereCenter(r.tm);
@@ -77,6 +87,6 @@ pub inline fn hit(self: *Sphere, r: *Ray, ray_t: IntervalF32) ?HitRecord {
     return rec;
 }
 
-pub inline fn sphereCenter(self: *Sphere, time: f32) zm.Vec {
+pub inline fn sphereCenter(self: *const Sphere, time: f32) zm.Vec {
     return self.center + zm.f32x4s(time) * self.center_vec;
 }

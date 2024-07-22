@@ -8,6 +8,8 @@ const IntervalF32 = @import("interval.zig").IntervalF32;
 const Ray = @import("Ray.zig");
 const util = @import("util.zig");
 
+const log = std.log.scoped(.BVH);
+
 pub const BVH = @This();
 
 const Ast = struct {
@@ -41,11 +43,11 @@ const Leaf = struct {
     objects: []Hittable,
     bbox: AABB,
 
-    pub inline fn hit(self: *Leaf, r: *Ray, ray_t: IntervalF32) ?HitRecord {
+    pub fn hit(self: *Leaf, r: *Ray, ray_t: IntervalF32) ?HitRecord {
         var rec: ?HitRecord = null;
         var interval = ray_t;
         for (self.objects) |obj| {
-            if (@constCast(&obj).hit(r, interval)) |res| {
+            if (obj.hit(r, interval)) |res| {
                 interval = IntervalF32.init(ray_t.min, res.t);
                 rec = res;
             }
@@ -123,11 +125,8 @@ const Node = union(enum) {
         }
     }
 
-    pub inline fn bbox(self: *Node) AABB {
-        switch (self.*) {
-            .ast => |*a| return a.bbox,
-            .leaf => |*l| return l.bbox,
-        }
+    pub fn bbox(self: *Node) AABB {
+        return self.bbox;
     }
 
     pub inline fn hit(self: *Node, r: *Ray, ray_t: IntervalF32) ?HitRecord {
@@ -197,13 +196,13 @@ bbox: AABB,
 
 pub fn init(allocator: std.mem.Allocator, objects: hittable.HittableList, max_depth: usize) !BVH {
     defer @constCast(&objects).deinit();
-    std.log.info("Creating BVH Tree with {} objects", .{objects.list.items.len});
+    log.info("Creating BVH Tree with {} objects", .{objects.list.items.len});
 
     const root = try allocator.create(Node);
     try root.init(allocator, objects.list.items, max_depth, 0);
     const bbox = root.recomputeBbox();
 
-    std.log.debug("Reached depth of: {}, max objects: {}", .{ reached_depth, max_objects });
+    log.debug("Reached depth of: {}, max objects: {}", .{ reached_depth, max_objects });
 
     // root.print(0, 0);
     return .{
@@ -218,17 +217,11 @@ pub fn deinit(self: *BVH) void {
 }
 
 pub inline fn hit(self: *BVH, r: *Ray, ray_t: IntervalF32) ?HitRecord {
-    if (self.bbox.hit(r, ray_t)) {
-        return self.root.hit(r, ray_t);
-    }
-
-    return null;
+    return self.root.hit(r, ray_t);
 }
 
 inline fn boxCompare(a: *Hittable, b: *Hittable, axis_index: i32) bool {
-    const a_axis_interval = a.boundingBox().axisInterval(axis_index);
-    const b_axis_interval = b.boundingBox().axisInterval(axis_index);
-    return a_axis_interval.min < b_axis_interval.min;
+    return a.boundingBox().axisInterval(axis_index).min < b.boundingBox().axisInterval(axis_index).min;
 }
 
 fn boxXCompare(_: @TypeOf(.{}), a: Hittable, b: Hittable) bool {

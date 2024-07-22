@@ -15,7 +15,7 @@ pub fn scene(allocator: std.mem.Allocator) !@This() {
 
     const material_ground = try allocator.create(Material);
     material_ground.* = Material.lambertian(zm.f32x4(0.5, 0.5, 0.5, 1.0));
-    try world.add(Hittable.sphere("Ground", Sphere{ .center = zm.f32x4(0, -1000, 0, 0), .radius = 1000, .mat = material_ground }));
+    try world.add(Hittable.sphere("Ground", Sphere.init(zm.f32x4(0, -1000, 0, 0), 1000, material_ground)));
 
     const a_max = 50;
     const b_max = 50;
@@ -47,11 +47,11 @@ pub fn scene(allocator: std.mem.Allocator) !@This() {
                     const albedo = rayray.util.randomVec3M(0.5, 1) + zm.f32x4(0, 0, 0, 1);
                     const fuzz = rayray.util.randomF32M(0, 0.5);
                     material.* = Material.metal(albedo, fuzz);
-                    try world.add(Hittable.sphere("Metal", Sphere{ .center = center, .radius = 0.2, .mat = material }));
+                    try world.add(Hittable.sphere("Metal", Sphere.init(center, 0.2, material)));
                 } else {
                     // glass
                     material.* = Material.dielectric(1.5);
-                    try world.add(Hittable.sphere("Dielectric", Sphere{ .center = center, .radius = 0.2, .mat = material }));
+                    try world.add(Hittable.sphere("Dielectric", Sphere.init(center, 0.2, material)));
                 }
             }
         }
@@ -63,13 +63,13 @@ pub fn scene(allocator: std.mem.Allocator) !@This() {
 
     const material2 = try allocator.create(Material);
     material2.* = Material.lambertian(zm.f32x4(0.4, 0.2, 0.1, 1));
-    try world.add(Hittable.sphere("Two: Lambertian", Sphere{ .center = zm.f32x4(-4, 1, 0, 0), .radius = 1, .mat = material1 }));
+    try world.add(Hittable.sphere("Two: Lambertian", Sphere.init(zm.f32x4(-4, 1, 0, 0), 1, material1)));
 
     const material3 = try allocator.create(Material);
     material3.* = Material.metal(zm.f32x4(0.7, 0.6, 0.5, 1), 0);
-    try world.add(Hittable.sphere("Three: Metal", Sphere{ .center = zm.f32x4(4, 1, 0, 0), .radius = 1, .mat = material3 }));
+    try world.add(Hittable.sphere("Three: Metal", Sphere.init(zm.f32x4(4, 1, 0, 0), 1, material3)));
 
-    try world.add(Hittable.sphere("One: Dielectric", Sphere{ .center = zm.f32x4(0, 1, 0, 0), .radius = 1, .mat = material2 }));
+    try world.add(Hittable.sphere("One: Dielectric", Sphere.init(zm.f32x4(0, 1, 0, 0), 1, material2)));
 
     return .{ .allocator = allocator, .world = world };
 }
