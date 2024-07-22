@@ -3,7 +3,6 @@ const build_options = @import("build-options");
 
 pub const zmath = @import("zmath");
 
-// const spall = @import("spall");
 const zigimg = @import("zigimg");
 const color = zigimg.color;
 
@@ -54,9 +53,6 @@ pub const Raytracer = struct {
     }
 
     pub fn render(self: *Self) !zigimg.Image {
-        // const s = spall.trace(@src(), "Render", .{});
-        // defer s.end();
-
         const chunk_height: usize = 25;
         const chunk_width: usize = 25;
 

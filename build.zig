@@ -15,11 +15,6 @@ pub fn build(b: *std.Build) void {
     const max_depth = b.option(u64, "max-depth", "") orelse 5;
     options.addOption(u64, "max_depth", max_depth);
 
-    const ztracy = b.dependency("ztracy", .{
-        .enable_ztracy = true,
-        .enable_fibers = true,
-    });
-
     const rayray = b.addModule("rayray", .{
         .root_source_file = b.path("src/rayray.zig"),
         .target = target,
@@ -27,10 +22,6 @@ pub fn build(b: *std.Build) void {
     });
     rayray.strip = strip;
     rayray.addOptions("build-options", options);
-    rayray.addImport("ztracy", ztracy.module("root"));
-    rayray.linkLibrary(ztracy.artifact("tracy"));
-
-    // rayray.addImport("spall", spall.module("spall"));
 
     addDeps(b, rayray);
 
@@ -43,8 +34,6 @@ pub fn build(b: *std.Build) void {
     exe.root_module.strip = strip;
 
     // addDeps(b, &exe.root_module);
-    exe.root_module.addImport("ztracy", ztracy.module("root"));
-    exe.linkLibrary(ztracy.artifact("tracy"));
     exe.root_module.addImport("rayray", rayray);
 
     const alib = b.dependency("a", .{

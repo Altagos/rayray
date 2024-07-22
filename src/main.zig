@@ -1,7 +1,6 @@
 const std = @import("std");
 
 const aa = @import("a");
-// const spall = @import("spall");
 
 const rayray = @import("rayray");
 const Hittable = rayray.hittable.Hittable;
@@ -22,19 +21,11 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    // try spall.init("./out/trace.spall");
-    // defer spall.deinit();
-
-    // spall.init_thread();
-    // defer spall.deinit_thread();
-
     // Setting up the world
     var scence = try scences.inOneWeekend(allocator);
     defer scence.deinit();
 
     std.log.info("World created", .{});
-
-    // const s = spall.trace(@src(), "Raytracer", .{});
 
     // Raytracing part
     var raytracer = try rayray.Raytracer.init(allocator, scence.world, .{
@@ -59,12 +50,6 @@ pub fn main() !void {
     const rendering_time = timer.lap();
 
     std.log.info("Image rendered ({}s)", .{rendering_time / std.time.ns_per_s});
-
-    // s.end();
-
-    // Saving to file
-    // const s_saving = spall.trace(@src(), "Write Image", .{});
-    // defer s_saving.end();
 
     try img.writeToFilePath("./out/out.png", .{ .png = .{} });
     std.log.info("Image saved to: ./out/out.png", .{});
