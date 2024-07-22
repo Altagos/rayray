@@ -48,8 +48,29 @@ pub fn main() !void {
     const img = try raytracer.render();
 
     const rendering_time = timer.lap();
+    var rt = rendering_time;
 
-    std.log.info("Image rendered ({}s)", .{rendering_time / std.time.ns_per_s});
+    const days = rt / std.time.ns_per_day;
+    rt = rt - (days * std.time.ns_per_day);
+
+    const hours = rt / std.time.ns_per_hour;
+    rt = rt - (hours * std.time.ns_per_hour);
+
+    const minutes = rt / std.time.ns_per_min;
+    rt = rt - (minutes * std.time.ns_per_min);
+
+    const seconds = rt / std.time.ns_per_s;
+    rt = rt - (seconds * std.time.ns_per_s);
+
+    const ms = rt / std.time.ns_per_ms;
+    rt = rt - (ms * std.time.ns_per_ms);
+
+    // std.log.info("Image rendered ({}s)", .{rendering_time / std.time.ns_per_s});
+    if (days == 0) {
+        std.log.info("Image rendered in: {}h {}m {}s {}ms", .{ hours, minutes, seconds, ms });
+    } else {
+        std.log.info("Image rendered in: {}d {}h {}m {}s {}ms", .{ days, hours, minutes, seconds, ms });
+    }
 
     try img.writeToFilePath("./out/out.png", .{ .png = .{} });
     std.log.info("Image saved to: ./out/out.png", .{});
