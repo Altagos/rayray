@@ -18,7 +18,7 @@ const Ast = struct {
     bbox: AABB = AABB{},
 
     pub fn hit(self: *Ast, r: *Ray, ray_t: IntervalF32) ?HitRecord {
-        if (!self.bbox.hit(r, ray_t)) return null;
+        // if (!self.bbox.hit(r, ray_t)) return null;
 
         var rec: ?HitRecord = null;
         var interval = ray_t;
@@ -130,10 +130,6 @@ const Node = union(enum) {
     }
 
     pub inline fn hit(self: *Node, r: *Ray, ray_t: IntervalF32) ?HitRecord {
-        // if (@constCast(&self.bbox()).hit(r, ray_t)) {
-
-        // }
-
         switch (self.*) {
             inline else => |*n| if (n.bbox.hit(r, ray_t)) {
                 return n.hit(r, ray_t);
@@ -142,57 +138,10 @@ const Node = union(enum) {
             },
         }
     }
-
-    fn recomputeBbox(self: *Node) AABB {
-        switch (self.*) {
-            .leaf => |*l| return l.bbox,
-            .ast => |*a| {
-                var left = AABB{};
-                var right = AABB{};
-
-                if (a.left) |l| left = l.recomputeBbox();
-                if (a.right) |r| right = r.recomputeBbox();
-
-                a.bbox = AABB.initAB(&left, &right);
-                return a.bbox;
-            },
-        }
-    }
-
-    pub fn print(self: *Node, depth: usize, side: u8) void {
-        for (0..depth) |_| std.debug.print("  ", .{});
-
-        switch (self.*) {
-            .ast => |*a| {
-                if (side == 1) {
-                    std.debug.print("Left = ", .{});
-                } else if (side >= 2) {
-                    std.debug.print("Right = ", .{});
-                }
-
-                std.debug.print("Ast\n", .{});
-
-                if (a.left) |left| left.print(depth + 1, 1);
-                if (a.right) |right| right.print(depth + 1, 2);
-            },
-            .leaf => |*l| std.debug.print("Leafs = {}\n", .{l}),
-        }
-    }
-
-    fn combineBbox(self: *Node) void {
-        var left = AABB{};
-        var right = AABB{};
-
-        if (self.left) |l| left = l.bbox;
-        if (self.right) |r| right = r.bbox;
-
-        self.bbox = AABB.initAB(&left, &right);
-    }
 };
 
 allocator: std.mem.Allocator,
 root: *Node,
-bbox: AABB,
 
 pub fn init(allocator: std.mem.Allocator, objects: hittable.HittableList, max_depth: usize) !BVH {
     defer @constCast(&objects).deinit();
@@ -200,15 +149,13 @@ pub fn init(allocator: std.mem.Allocator, objects: hittable.HittableList, max_de
 
     const root = try allocator.create(Node);
     try root.init(allocator, objects.list.items, max_depth, 0);
-    const bbox = root.recomputeBbox();
+    // const bbox = root.recomputeBbox();
 
     log.debug("Reached depth of: {}, max objects: {}", .{ reached_depth, max_objects });
 
-    // root.print(0, 0);
     return .{
         .allocator = allocator,
         .root = root,
-        .bbox = bbox,
     };
 }
 

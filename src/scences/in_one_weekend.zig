@@ -17,9 +17,9 @@ pub fn scene(allocator: std.mem.Allocator) !@This() {
     material_ground.* = Material.lambertian(zm.f32x4(0.5, 0.5, 0.5, 1.0));
     try world.add(Hittable.sphere("Ground", Sphere.init(zm.f32x4(0, -1000, 0, 0), 1000, material_ground)));
 
-    const a_max = 50;
-    const b_max = 50;
-    const c = 3.0;
+    const a_max = 30;
+    const b_max = 30;
+    const c = 1.7;
 
     var a: isize = -a_max;
     while (a < a_max) : (a += 1) {

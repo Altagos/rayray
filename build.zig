@@ -4,11 +4,6 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    // const enable_spall = b.option(bool, "enable_spall", "Enable spall profiling") orelse false;
-    // const spall = b.dependency("spall", .{
-    //     .enable = enable_spall,
-    // });
-
     const options = b.addOptions();
 
     const strip = b.option(bool, "strip", "") orelse (optimize != .Debug);
@@ -33,7 +28,6 @@ pub fn build(b: *std.Build) void {
     });
     exe.root_module.strip = strip;
 
-    // addDeps(b, &exe.root_module);
     exe.root_module.addImport("rayray", rayray);
 
     const alib = b.dependency("a", .{

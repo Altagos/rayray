@@ -50,6 +50,7 @@ pub fn trace(ctx: Context) void {
         var width_iter = ctx.width.iter();
         while (width_iter.nextExc()) |i| {
             var col = zm.f32x4(0.0, 0.0, 0.0, 1.0);
+
             for (0..ctx.cam.samples_per_pixel) |_| {
                 var ray = ctx.cam.getRay(i, j);
                 col += rayColor(&ray, ctx.world, ctx.cam.max_depth);

@@ -45,12 +45,15 @@ pub fn axisInterval(self: *const AABB, n: i32) Interval {
 }
 
 pub fn hit(self: *AABB, r: *Ray, ray_t: Interval) bool {
+    if (ray_t.max <= ray_t.min) return false;
+
     const ray_orig = r.orig;
     const ray_dir = r.dir;
 
     var t = ray_t;
 
-    for (0..3) |axis| {
+    var axis: u8 = 0;
+    while (axis < 3) : (axis += 1) {
         const ax = self.axisInterval(@intCast(axis));
         const adinv = 1.0 / ray_dir[axis];
 
@@ -65,7 +68,7 @@ pub fn hit(self: *AABB, r: *Ray, ray_t: Interval) bool {
             if (t0 < t.max) t.max = t0;
         }
 
-        if (ray_t.max <= ray_t.min) return false;
+        if (t.max <= t.min) return false;
     }
 
     return true;

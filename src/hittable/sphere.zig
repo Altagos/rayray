@@ -41,23 +41,11 @@ pub fn initMoving(center1: zm.Vec, center2: zm.Vec, radius: f32, mat: *Material)
 }
 
 pub inline fn boundingBox(self: *Sphere) AABB {
-    // if (self.bbox) |bbox| {
     return self.bbox;
-    // } else {
-    //     const rvec = zm.f32x4s(self.radius);
-    //     self.bbox = AABB.initP(self.center - rvec, self.center + rvec);
-    //     return self.bbox.?;
-    // }
 }
 
 pub fn hit(self: *const Sphere, r: *Ray, ray_t: IntervalF32) ?HitRecord {
-    const center = blk: {
-        if (self.is_moving) {
-            break :blk self.sphereCenter(r.tm);
-        } else {
-            break :blk self.center;
-        }
-    };
+    const center = self.sphereCenter(r.tm);
     const oc = r.orig - center;
     const a = zm.lengthSq3(r.dir)[0];
     const half_b = zm.dot3(oc, r.dir)[0];
@@ -66,7 +54,7 @@ pub fn hit(self: *const Sphere, r: *Ray, ray_t: IntervalF32) ?HitRecord {
     const discriminant = half_b * half_b - a * c;
     if (discriminant < 0) return null;
 
-    const sqrtd = zm.sqrt(discriminant);
+    const sqrtd = @sqrt(discriminant);
 
     // Find the nearest root that lies in the acceptable range
     var root = (-half_b - sqrtd) / a;
@@ -88,5 +76,6 @@ pub fn hit(self: *const Sphere, r: *Ray, ray_t: IntervalF32) ?HitRecord {
 }
 
 pub inline fn sphereCenter(self: *const Sphere, time: f32) zm.Vec {
+    if (!self.is_moving) return self.center;
     return self.center + zm.f32x4s(time) * self.center_vec;
 }

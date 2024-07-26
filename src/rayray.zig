@@ -71,7 +71,7 @@ pub const Raytracer = struct {
         const num_threads = blk: {
             const count = try std.Thread.getCpuCount();
             if (count > 1) {
-                break :blk count - 1;
+                break :blk count;
             } else break :blk 1;
         };
 
