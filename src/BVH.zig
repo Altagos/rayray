@@ -84,14 +84,7 @@ const Node = union(enum) {
         }
 
         const axis = ast_bbox.longestAxis();
-
-        if (axis == 0) {
-            std.mem.sort(Hittable, objects, .{}, boxXCompare);
-        } else if (axis == 1) {
-            std.mem.sort(Hittable, objects, .{}, boxYCompare);
-        } else {
-            std.mem.sort(Hittable, objects, .{}, boxZCompare);
-        }
+        std.mem.sort(Hittable, objects, axis, boxCompare);
 
         var left = try allocator.create(Node);
         var right = try allocator.create(Node);
@@ -133,10 +126,10 @@ const Node = union(enum) {
         switch (self.*) {
             inline else => |*n| if (n.bbox.hit(r, ray_t)) {
                 return n.hit(r, ray_t);
-            } else {
-                return null;
             },
         }
+
+        return null;
     }
 };
 
@@ -149,7 +142,6 @@ pub fn init(allocator: std.mem.Allocator, objects: hittable.HittableList, max_de
 
     const root = try allocator.create(Node);
     try root.init(allocator, objects.list.items, max_depth, 0);
-    // const bbox = root.recomputeBbox();
 
     log.debug("Reached depth of: {}, max objects: {}", .{ reached_depth, max_objects });
 
@@ -167,18 +159,6 @@ pub inline fn hit(self: *BVH, r: *Ray, ray_t: IntervalF32) ?HitRecord {
     return self.root.hit(r, ray_t);
 }
 
-inline fn boxCompare(a: *Hittable, b: *Hittable, axis_index: i32) bool {
-    return a.boundingBox().axisInterval(axis_index).min < b.boundingBox().axisInterval(axis_index).min;
-}
-
-fn boxXCompare(_: @TypeOf(.{}), a: Hittable, b: Hittable) bool {
-    return boxCompare(@constCast(&a), @constCast(&b), 0);
-}
-
-fn boxYCompare(_: @TypeOf(.{}), a: Hittable, b: Hittable) bool {
-    return boxCompare(@constCast(&a), @constCast(&b), 1);
-}
-
-fn boxZCompare(_: @TypeOf(.{}), a: Hittable, b: Hittable) bool {
-    return boxCompare(@constCast(&a), @constCast(&b), 2);
+fn boxCompare(axis_index: i32, a: Hittable, b: Hittable) bool {
+    return @constCast(&a).boundingBox().axisInterval(axis_index).min < @constCast(&b).boundingBox().axisInterval(axis_index).min;
 }
