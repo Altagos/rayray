@@ -15,6 +15,8 @@ pub const HitRecord = struct {
     normal: zm.Vec = zm.f32x4s(1.0),
     mat: *Material,
     t: f32,
+    u: f32,
+    v: f32,
     front_face: bool = true,
 
     pub fn setFaceNormal(self: *HitRecord, r: *Ray, outward_normal: zm.Vec) void {

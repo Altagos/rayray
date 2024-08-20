@@ -10,7 +10,7 @@ const util = @import("util.zig");
 
 const log = std.log.scoped(.BVH);
 
-pub const BVH = @This();
+const BVH = @This();
 
 const Ast = struct {
     left: ?*Node = null,
