@@ -1,3 +1,5 @@
+const math = @import("std").math;
+
 const zm = @import("zmath");
 
 const AABB = @import("../AABB.zig");
@@ -71,6 +73,7 @@ pub fn hit(self: *const Sphere, r: *Ray, ray_t: IntervalF32) ?HitRecord {
 
     const outward_normal = (rec.p - self.center) / zm.f32x4s(self.radius);
     rec.setFaceNormal(r, outward_normal);
+    setSphereUV(&rec, outward_normal);
 
     return rec;
 }
@@ -78,4 +81,12 @@ pub fn hit(self: *const Sphere, r: *Ray, ray_t: IntervalF32) ?HitRecord {
 pub inline fn sphereCenter(self: *const Sphere, time: f32) zm.Vec {
     if (!self.is_moving) return self.center;
     return self.center + zm.f32x4s(time) * self.center_vec;
+}
+
+fn setSphereUV(rec: *HitRecord, p: zm.Vec) void {
+    const theta = math.acos(-p[1]);
+    const phi = math.atan2(-p[2], p[0]) + math.pi;
+
+    rec.u = phi / (2 * math.pi);
+    rec.v = theta / phi;
 }

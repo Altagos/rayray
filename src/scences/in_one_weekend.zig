@@ -1,12 +1,14 @@
 const std = @import("std");
 
 const rayray = @import("rayray");
+const Camera = rayray.Camera;
 const Hittable = rayray.hittable.Hittable;
 const HittableList = rayray.hittable.HittableList;
 const Material = rayray.material.Material;
 const Sphere = rayray.hittable.Sphere;
 const zm = rayray.zmath;
 
+camera: Camera.Options,
 world: HittableList,
 allocator: std.mem.Allocator,
 
@@ -14,7 +16,7 @@ pub fn scene(allocator: std.mem.Allocator) !@This() {
     var world = HittableList.init(allocator);
 
     const material_ground = try allocator.create(Material);
-    material_ground.* = Material.lambertian(zm.f32x4(0.5, 0.5, 0.5, 1.0));
+    material_ground.* = Material.lambertianS(zm.f32x4(0.5, 0.5, 0.5, 1.0));
     try world.add(Hittable.sphere("Ground", Sphere.init(zm.f32x4(0, -1000, 0, 0), 1000, material_ground)));
 
     const a_max = 30;
@@ -39,7 +41,7 @@ pub fn scene(allocator: std.mem.Allocator) !@This() {
                 if (choose_mat < 0.8) {
                     // diffuse
                     const albedo = rayray.util.randomVec3() * rayray.util.randomVec3() + zm.f32x4(0, 0, 0, 1);
-                    material.* = Material.lambertian(albedo);
+                    material.* = Material.lambertianS(albedo);
                     const center2 = center + zm.f32x4(0, rayray.util.randomF32M(0, 0.5), 0, 0);
                     try world.add(Hittable.sphere("Lambertian", Sphere.initMoving(center, center2, 0.2, material)));
                 } else if (choose_mat < 0.95) {
@@ -62,7 +64,7 @@ pub fn scene(allocator: std.mem.Allocator) !@This() {
     // try world.add(Hittable.sphere("One: Dielectric", Sphere{ .center = zm.f32x4(0, 1, 0, 0), .radius = 1, .mat = material1 }));
 
     const material2 = try allocator.create(Material);
-    material2.* = Material.lambertian(zm.f32x4(0.4, 0.2, 0.1, 1));
+    material2.* = Material.lambertianS(zm.f32x4(0.4, 0.2, 0.1, 1));
     try world.add(Hittable.sphere("Two: Lambertian", Sphere.init(zm.f32x4(-4, 1, 0, 0), 1, material1)));
 
     const material3 = try allocator.create(Material);
@@ -71,7 +73,19 @@ pub fn scene(allocator: std.mem.Allocator) !@This() {
 
     try world.add(Hittable.sphere("One: Dielectric", Sphere.init(zm.f32x4(0, 1, 0, 0), 1, material2)));
 
-    return .{ .allocator = allocator, .world = world };
+    return .{ .allocator = allocator, .world = world, .camera = .{
+        .aspect_ratio = 16.0 / 9.0,
+        .image_width = 400,
+        .samples_per_pixel = 50,
+        .max_depth = 50,
+
+        .vfov = 20,
+        .look_from = zm.f32x4(20, 6, 6, 0),
+        .look_at = zm.f32x4(0, 0, 0, 0),
+
+        .defocus_angle = 0.6,
+        .focus_dist = 18,
+    } };
 }
 
 pub fn deinit(self: *@This()) void {

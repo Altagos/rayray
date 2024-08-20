@@ -5,14 +5,19 @@ const zm = @import("zmath");
 const hittable = @import("hittable.zig");
 const Ray = @import("Ray.zig");
 const util = @import("util.zig");
+const texture = @import("texture.zig");
 
 pub const Material = union(enum) {
     lambertian: Lambertian,
     metal: Metal,
     dielectric: Dielectric,
 
-    pub fn lambertian(albedo: zm.Vec) Material {
-        return .{ .lambertian = .{ .albedo = albedo } };
+    pub fn lambertian(tex: texture.Texture) Material {
+        return .{ .lambertian = .{ .tex = tex } };
+    }
+
+    pub fn lambertianS(albedo: zm.Vec) Material {
+        return .{ .lambertian = .{ .tex = .{ .solid_color = .{ .albedo = albedo } } } };
     }
 
     pub fn metal(albedo: zm.Vec, fuzz: f32) Material {
@@ -33,14 +38,14 @@ pub const Material = union(enum) {
 };
 
 pub const Lambertian = struct {
-    albedo: zm.Vec,
+    tex: texture.Texture,
 
     pub inline fn scatter(self: *Lambertian, r: *Ray, rec: *hittable.HitRecord, attenuation: *zm.Vec) ?Ray {
         var scatter_dir = rec.normal + util.randomUnitVec();
 
         if (util.nearZero(scatter_dir)) scatter_dir = rec.normal;
 
-        attenuation.* = self.albedo;
+        attenuation.* = self.tex.value(rec.u, rec.v, rec.p);
         // return Ray.initT(rec.p, scatter_dir, r.tm);
         return Ray{ .orig = rec.p, .dir = scatter_dir, .tm = r.tm };
     }

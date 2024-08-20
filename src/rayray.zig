@@ -12,6 +12,7 @@ pub const hittable = @import("hittable.zig");
 pub const interval = @import("interval.zig");
 const IntervalUsize = interval.IntervalUsize;
 pub const material = @import("material.zig");
+pub const texture = @import("texture.zig");
 pub const tracer = @import("tracer.zig");
 pub const util = @import("util.zig");
 
