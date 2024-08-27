@@ -43,6 +43,8 @@ pub fn rayColor(r: *Ray, world: *BVH, depth: usize) zm.Vec {
 }
 
 pub fn trace(ctx: Context) void {
+    const spp = zm.f32x4s(@as(f32, @floatFromInt(ctx.cam.samples_per_pixel)));
+
     var height_iter = ctx.height.iter();
     while (height_iter.nextInc()) |j| {
         if (j >= ctx.cam.image_height) break;
@@ -56,7 +58,7 @@ pub fn trace(ctx: Context) void {
                 col += rayColor(&ray, ctx.world, ctx.cam.max_depth);
             }
 
-            ctx.cam.setPixel(i, j, vecToRgba(col, ctx.cam.samples_per_pixel)) catch break;
+            ctx.cam.setPixel(i, j, vecToRgba(col, spp)) catch break;
         }
     }
 }
@@ -65,8 +67,8 @@ const zero = zm.f32x4s(0.0);
 const nearly_one = zm.f32x4s(0.999);
 const v256 = zm.f32x4s(256);
 
-inline fn vecToRgba(v: zm.Vec, samples_per_pixel: usize) zigimg.color.Rgba32 {
-    var rgba = zm.sqrt(v / zm.f32x4s(@as(f32, @floatFromInt(samples_per_pixel)))); // linear to gamma
+inline fn vecToRgba(v: zm.Vec, samples_per_pixel: zm.Vec) zigimg.color.Rgba32 {
+    var rgba = zm.sqrt(v / samples_per_pixel); // linear to gamma
     rgba = zm.clampFast(rgba, zero, nearly_one);
     rgba = rgba * v256;
 
