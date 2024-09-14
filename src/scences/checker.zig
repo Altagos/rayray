@@ -22,10 +22,10 @@ pub fn scene(allocator: std.mem.Allocator) !@This() {
     c2.* = tex.Texture{ .solid_color = tex.SolidColor.rgb(0.9, 0.9, 0.9) };
 
     const checker = try allocator.create(Material);
-    checker.* = Material.lambertian(tex.Texture{ .checker_texture = tex.CheckerTexture.init(0.32, c1, c2) });
+    checker.* = Material.initLambertian(tex.Texture{ .checker_texture = tex.CheckerTexture.init(0.32, c1, c2) });
 
-    try world.add(Hittable.sphere("s1", Sphere.init(zm.f32x4(0, -10, 0, 0), 10, checker)));
-    try world.add(Hittable.sphere("s2", Sphere.init(zm.f32x4(0, 10, 0, 0), 10, checker)));
+    try world.add(Hittable.initSphere("s1", Sphere.init(zm.f32x4(0, -10, 0, 0), 10, checker)));
+    try world.add(Hittable.initSphere("s2", Sphere.init(zm.f32x4(0, 10, 0, 0), 10, checker)));
 
     return .{ .allocator = allocator, .world = world, .camera = Camera.Options{
         .aspect_ratio = 16.0 / 9.0,

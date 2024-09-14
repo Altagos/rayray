@@ -12,19 +12,19 @@ pub const Material = union(enum) {
     metal: Metal,
     dielectric: Dielectric,
 
-    pub fn lambertian(tex: texture.Texture) Material {
+    pub fn initLambertian(tex: texture.Texture) Material {
         return .{ .lambertian = .{ .tex = tex } };
     }
 
-    pub fn lambertianS(albedo: zm.Vec) Material {
+    pub fn initLambertianS(albedo: zm.Vec) Material {
         return .{ .lambertian = .{ .tex = .{ .solid_color = .{ .albedo = albedo } } } };
     }
 
-    pub fn metal(albedo: zm.Vec, fuzz: f32) Material {
+    pub fn initMetal(albedo: zm.Vec, fuzz: f32) Material {
         return .{ .metal = .{ .albedo = albedo, .fuzz = if (fuzz < 1) fuzz else 1.0 } };
     }
 
-    pub fn dielectric(refraction_index: f32) Material {
+    pub fn initDielectric(refraction_index: f32) Material {
         return .{ .dielectric = .{ .refraction_index = refraction_index } };
     }
 

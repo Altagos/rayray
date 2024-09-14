@@ -16,8 +16,8 @@ pub fn scene(allocator: std.mem.Allocator) !@This() {
     var world = HittableList.init(allocator);
 
     const material_ground = try allocator.create(Material);
-    material_ground.* = Material.lambertianS(zm.f32x4(0.5, 0.5, 0.5, 1.0));
-    try world.add(Hittable.sphere("Ground", Sphere.init(zm.f32x4(0, -1000, 0, 0), 1000, material_ground)));
+    material_ground.* = Material.initLambertianS(zm.f32x4(0.5, 0.5, 0.5, 1.0));
+    try world.add(Hittable.initSphere("Ground", Sphere.init(zm.f32x4(0, -1000, 0, 0), 1000, material_ground)));
 
     const a_max = 30;
     const b_max = 30;
@@ -41,37 +41,37 @@ pub fn scene(allocator: std.mem.Allocator) !@This() {
                 if (choose_mat < 0.8) {
                     // diffuse
                     const albedo = rayray.util.randomVec3() * rayray.util.randomVec3() + zm.f32x4(0, 0, 0, 1);
-                    material.* = Material.lambertianS(albedo);
+                    material.* = Material.initLambertianS(albedo);
                     const center2 = center + zm.f32x4(0, rayray.util.randomF32M(0, 0.5), 0, 0);
-                    try world.add(Hittable.sphere("Lambertian", Sphere.initMoving(center, center2, 0.2, material)));
+                    try world.add(Hittable.initSphere("Lambertian", Sphere.initMoving(center, center2, 0.2, material)));
                 } else if (choose_mat < 0.95) {
                     // metal
                     const albedo = rayray.util.randomVec3M(0.5, 1) + zm.f32x4(0, 0, 0, 1);
                     const fuzz = rayray.util.randomF32M(0, 0.5);
-                    material.* = Material.metal(albedo, fuzz);
-                    try world.add(Hittable.sphere("Metal", Sphere.init(center, 0.2, material)));
+                    material.* = Material.initMetal(albedo, fuzz);
+                    try world.add(Hittable.initSphere("Metal", Sphere.init(center, 0.2, material)));
                 } else {
                     // glass
-                    material.* = Material.dielectric(1.5);
-                    try world.add(Hittable.sphere("Dielectric", Sphere.init(center, 0.2, material)));
+                    material.* = Material.initDielectric(1.5);
+                    try world.add(Hittable.initSphere("Dielectric", Sphere.init(center, 0.2, material)));
                 }
             }
         }
     }
 
     const material1 = try allocator.create(Material);
-    material1.* = Material.dielectric(1.5);
-    // try world.add(Hittable.sphere("One: Dielectric", Sphere{ .center = zm.f32x4(0, 1, 0, 0), .radius = 1, .mat = material1 }));
+    material1.* = Material.initDielectric(1.5);
+    try world.add(Hittable.initSphere("One: Dielectric", Sphere.init(zm.f32x4(0, 1, 0, 0), 1, material1)));
 
     const material2 = try allocator.create(Material);
-    material2.* = Material.lambertianS(zm.f32x4(0.4, 0.2, 0.1, 1));
-    try world.add(Hittable.sphere("Two: Lambertian", Sphere.init(zm.f32x4(-4, 1, 0, 0), 1, material1)));
+    material2.* = Material.initLambertianS(zm.f32x4(0.4, 0.2, 0.1, 1));
+    try world.add(Hittable.initSphere("Two: Lambertian", Sphere.init(zm.f32x4(-4, 1, 0, 0), 1, material2)));
 
     const material3 = try allocator.create(Material);
-    material3.* = Material.metal(zm.f32x4(0.7, 0.6, 0.5, 1), 0);
-    try world.add(Hittable.sphere("Three: Metal", Sphere.init(zm.f32x4(4, 1, 0, 0), 1, material3)));
+    material3.* = Material.initMetal(zm.f32x4(0.7, 0.6, 0.5, 1), 0);
+    try world.add(Hittable.initSphere("Three: Metal", Sphere.init(zm.f32x4(4, 1, 0, 0), 1, material3)));
 
-    try world.add(Hittable.sphere("One: Dielectric", Sphere.init(zm.f32x4(0, 1, 0, 0), 1, material2)));
+    // try world.add(Hittable.sphere("One: Dielectric", Sphere.init(zm.f32x4(0, 1, 0, 0), 1, material2)));
 
     return .{ .allocator = allocator, .world = world, .camera = .{
         .aspect_ratio = 16.0 / 9.0,

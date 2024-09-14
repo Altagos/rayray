@@ -28,7 +28,7 @@ pub const HitRecord = struct {
 pub const Hittable = union(enum) {
     sphere: struct { Sphere, []const u8 },
 
-    pub fn sphere(name: []const u8, s: Sphere) Hittable {
+    pub fn initSphere(name: []const u8, s: Sphere) Hittable {
         // std.log.info("created sphere with mat: {}", .{s.mat});
         return .{ .sphere = .{ s, name } };
     }

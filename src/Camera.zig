@@ -32,6 +32,7 @@ image_width: usize,
 aspect_ratio: f32,
 
 samples_per_pixel: usize,
+samples_per_pixel_v: zm.Vec,
 max_depth: usize,
 
 vfov: f32,
@@ -117,6 +118,7 @@ pub fn init(allocator: std.mem.Allocator, opts: Options) !Camera {
         .aspect_ratio = aspect_ratio,
 
         .samples_per_pixel = opts.samples_per_pixel,
+        .samples_per_pixel_v = zm.f32x4s(@as(f32, @floatFromInt(opts.samples_per_pixel))),
         .max_depth = opts.max_depth,
 
         .vfov = vfov,

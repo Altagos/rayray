@@ -24,17 +24,20 @@ pub const Context = struct {
     width: IntervalUsize,
 };
 
+const white = zm.f32x4s(1.0);
+const black = zm.f32x4(0, 0, 0, 1.0);
+
 pub fn rayColor(r: *Ray, world: *BVH, depth: usize) zm.Vec {
     @setFloatMode(.optimized);
-    if (depth == 0) return zm.f32x4(0, 0, 0, 1.0);
+    if (depth == 0) return black;
 
     if (world.hit(r, .{ .min = 0.001, .max = std.math.inf(f32) })) |rec| {
-        var attenuation = zm.f32x4s(1.0);
+        var attenuation = white;
         if (rec.mat.scatter(r, @constCast(&rec), &attenuation)) |new_r| {
             return attenuation * rayColor(@constCast(&new_r), world, depth - 1);
         }
 
-        return zm.f32x4(0, 0, 0, 1.0);
+        return black;
     }
 
     const unit_direction = zm.normalize3(r.dir);
@@ -43,8 +46,6 @@ pub fn rayColor(r: *Ray, world: *BVH, depth: usize) zm.Vec {
 }
 
 pub fn trace(ctx: Context) void {
-    const spp = zm.f32x4s(@as(f32, @floatFromInt(ctx.cam.samples_per_pixel)));
-
     var height_iter = ctx.height.iter();
     while (height_iter.nextInc()) |j| {
         if (j >= ctx.cam.image_height) break;
@@ -58,7 +59,10 @@ pub fn trace(ctx: Context) void {
                 col += rayColor(&ray, ctx.world, ctx.cam.max_depth);
             }
 
-            ctx.cam.setPixel(i, j, vecToRgba(col, spp)) catch break;
+            ctx.cam.setPixel(i, j, vecToRgba(
+                col,
+                ctx.cam.samples_per_pixel_v,
+            )) catch break;
         }
     }
 }
@@ -68,9 +72,11 @@ const nearly_one = zm.f32x4s(0.999);
 const v256 = zm.f32x4s(256);
 
 inline fn vecToRgba(v: zm.Vec, samples_per_pixel: zm.Vec) zigimg.color.Rgba32 {
-    var rgba = zm.sqrt(v / samples_per_pixel); // linear to gamma
-    rgba = zm.clampFast(rgba, zero, nearly_one);
-    rgba = rgba * v256;
+    const rgba = zm.clampFast(
+        @sqrt(v / samples_per_pixel),
+        zero,
+        nearly_one,
+    ) * v256; // linear to gamma
 
     return zigimg.color.Rgba32.initRgba(
         @intFromFloat(rgba[0]),
