@@ -15,8 +15,8 @@
         .zigimg = .{
             // .url = "git+https://github.com/altagos/zigimg#a5a18768691c27cf3b312b67ca5084148a502e3e",
             // .hash = "1220e69e80741a9650a86e4369128698005f0049c6508b788e7fe1809480af62f4f8",
-            .url = "git+https://github.com/zigimg/zigimg#d9dbbe22b5f7b5f1f4772169ed93ffeed8e8124d",
-            .hash = "122013646f7038ecc71ddf8a0d7de346d29a6ec40140af57f838b0a975c69af512b0",
+            .url = "git+https://github.com/altagos/zigimg#cf13eae690b9c042d08feb4f0446661cf7c0ccc4",
+            .hash = "1220dcdd3df49d5b3cdbf279efee2a5bfbea1bb05065a569650b0688de269108e562",
         },
     },
     .paths = .{
