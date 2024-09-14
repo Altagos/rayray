@@ -19,9 +19,9 @@ pub fn scene(allocator: std.mem.Allocator) !@This() {
     material_ground.* = Material.initLambertianS(zm.f32x4(0.5, 0.5, 0.5, 1.0));
     try world.add(Hittable.initSphere("Ground", Sphere.init(zm.f32x4(0, -1000, 0, 0), 1000, material_ground)));
 
-    const a_max = 30;
-    const b_max = 30;
-    const c = 1.7;
+    const a_max = 11;
+    const b_max = 11;
+    const c = 1;
 
     var a: isize = -a_max;
     while (a < a_max) : (a += 1) {
@@ -75,16 +75,16 @@ pub fn scene(allocator: std.mem.Allocator) !@This() {
 
     return .{ .allocator = allocator, .world = world, .camera = .{
         .aspect_ratio = 16.0 / 9.0,
-        .image_width = 400,
-        .samples_per_pixel = 50,
+        .image_width = 1200,
+        .samples_per_pixel = 500,
         .max_depth = 50,
 
         .vfov = 20,
-        .look_from = zm.f32x4(20, 6, 6, 0),
+        .look_from = zm.f32x4(13, 2, 3, 0),
         .look_at = zm.f32x4(0, 0, 0, 0),
 
         .defocus_angle = 0.6,
-        .focus_dist = 18,
+        .focus_dist = 10,
     } };
 }
 
