@@ -7,7 +7,7 @@ pub fn build(b: *std.Build) void {
     const options = b.addOptions();
 
     const strip = b.option(bool, "strip", "") orelse (optimize != .Debug);
-    const max_depth = b.option(u64, "max-depth", "") orelse 5;
+    const max_depth = b.option(u64, "max-depth", "Set the max depth of the BVH tree") orelse std.math.maxInt(u64);
     options.addOption(u64, "max_depth", max_depth);
 
     const rayray = b.addModule("rayray", .{
@@ -27,7 +27,6 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     exe.root_module.strip = strip;
-
     exe.root_module.addImport("rayray", rayray);
 
     const alib = b.dependency("a", .{

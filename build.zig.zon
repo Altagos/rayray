@@ -1,8 +1,7 @@
 .{
     .name = "rayray",
     .version = "0.1.0",
-    .zig_version = "v0.13.0-dev.3+dddddcffd",
-    .minimum_zig_version = "0.13.0-dev.3+dddddcffd",
+    .zig_version = "0.14.0-dev.1569+b56a667ec",
     .dependencies = .{
         // libs folder
         .zmath = .{ .path = "libs/zmath" },
@@ -13,8 +12,6 @@
             .hash = "12209a07e35e58e69838fd66b68a13ee2b1fbf999e6242acdec0d7354be1324aef76",
         },
         .zigimg = .{
-            // .url = "git+https://github.com/altagos/zigimg#a5a18768691c27cf3b312b67ca5084148a502e3e",
-            // .hash = "1220e69e80741a9650a86e4369128698005f0049c6508b788e7fe1809480af62f4f8",
             .url = "git+https://github.com/altagos/zigimg#cf13eae690b9c042d08feb4f0446661cf7c0ccc4",
             .hash = "1220dcdd3df49d5b3cdbf279efee2a5bfbea1bb05065a569650b0688de269108e562",
         },
@@ -23,7 +20,7 @@
         "build.zig",
         "build.zig.zon",
         "src",
-        //"LICENSE",
+        "LICENSE",
         //"README.md",
     },
 }
