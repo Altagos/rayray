@@ -21,9 +21,9 @@ pub const IntervalIteratorType = enum {
 };
 
 pub fn Interval(comptime T: type) type {
-    if (@typeInfo(T) == .Int) {
+    if (@typeInfo(T) == .int) {
         return IntInterval(T);
-    } else if (@typeInfo(T) == .Float) {
+    } else if (@typeInfo(T) == .float) {
         return FloatInterval(T);
     } else {
         @compileError("Interval only supports Int and Float Types!");
