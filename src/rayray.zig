@@ -12,6 +12,7 @@ pub const hittable = @import("hittable.zig");
 pub const interval = @import("interval.zig");
 const IntervalUsize = interval.IntervalUsize;
 pub const material = @import("material.zig");
+pub const Scene = @import("Scene.zig");
 pub const texture = @import("texture.zig");
 pub const tracer = @import("tracer.zig");
 pub const util = @import("util.zig");
@@ -30,25 +31,21 @@ pub const Raytracer = struct {
     allocator: std.mem.Allocator,
     thread_pool: *std.Thread.Pool,
 
-    camera: Camera,
-    world: hittable.HittableList,
+    scene: Scene,
 
-    pub fn init(allocator: std.mem.Allocator, world: hittable.HittableList, camera_opts: Camera.Options) !Self {
+    pub fn init(allocator: std.mem.Allocator, scene: Scene) !Self {
         var thread_pool = try allocator.create(std.Thread.Pool);
         try thread_pool.init(.{ .allocator = allocator });
 
         return .{
             .allocator = allocator,
             .thread_pool = thread_pool,
-            .camera = try Camera.init(allocator, camera_opts),
-            .world = world,
+            .scene = scene,
         };
     }
 
     pub fn deinit(self: *Self) void {
-        self.camera.deinit();
-        self.world.deinit();
-
+        self.scene.deinit();
         self.thread_pool.deinit();
         self.allocator.destroy(self.thread_pool);
     }
@@ -57,13 +54,13 @@ pub const Raytracer = struct {
         const chunk_height: usize = 25;
         const chunk_width: usize = 25;
 
-        var rows: usize = @divTrunc(self.camera.image_height, chunk_height);
-        if (self.camera.image_height % rows != 0) {
+        var rows: usize = @divTrunc(self.scene.camera.image_height, chunk_height);
+        if (self.scene.camera.image_height % rows != 0) {
             rows += 1;
         }
 
-        var cols: usize = @divTrunc(self.camera.image_width, chunk_width);
-        if (self.camera.image_width % cols != 0) {
+        var cols: usize = @divTrunc(self.scene.camera.image_width, chunk_width);
+        if (self.scene.camera.image_width % cols != 0) {
             cols += 1;
         }
 
@@ -76,7 +73,9 @@ pub const Raytracer = struct {
             } else break :blk 1;
         };
 
-        log.debug("rows: {}, cols: {}, chunk_height: {}, chunk_width: {}, num_chunks: {}, num_threads: {}", .{
+        log.debug("with: {}, height: {}, rows: {}, cols: {}, chunk_height: {}, chunk_width: {}, num_chunks: {}, num_threads: {}", .{
+            self.scene.camera.image_width,
+            self.scene.camera.image_height,
             rows,
             cols,
             chunk_height,
@@ -87,15 +86,24 @@ pub const Raytracer = struct {
 
         var root_node = std.Progress.start(.{
             .root_name = "Ray Tracer",
-            .estimated_total_items = 3,
+            .estimated_total_items = 4,
         });
 
         var bvh_node = root_node.start("Createing BVH", 0);
 
-        var world_bvh = try BVH.init(self.allocator, self.world, build_options.max_depth);
+        var world_bvh = try BVH.init(self.allocator, self.scene.world, build_options.max_depth);
 
         bvh_node.end();
         root_node.setCompletedItems(0);
+
+        var create_pixels_node = root_node.start("Create pixel array", 0);
+
+        const pixels = try self.allocator.alloc(zmath.Vec, self.scene.camera.image_height * self.scene.camera.image_width);
+        defer self.allocator.free(pixels);
+        // const l = pixels.ptr;
+
+        create_pixels_node.end();
+        root_node.setCompletedItems(1);
 
         var task_node = root_node.start("Creating render tasks", 0);
 
@@ -103,14 +111,17 @@ pub const Raytracer = struct {
         defer self.allocator.free(tasks);
 
         for (tasks, 0..) |*t, id| {
-            const row: usize = @divTrunc(id, cols) * chunk_height;
-            const col: usize = (id - cols * @divTrunc(id, cols)) * chunk_width;
+            // const row: usize = @divTrunc(id, cols) * chunk_height;
+            // const col: usize = (id - cols * @divTrunc(id, cols)) * chunk_width;
+            const row: usize = (id / cols) * chunk_height;
+            const col: usize = (id % cols) * chunk_width;
 
             const c_height = IntervalUsize{ .min = row, .max = row + chunk_height };
             const c_width = IntervalUsize{ .min = col, .max = col + chunk_width + 1 };
 
             const ctx = tracer.Context{
-                .cam = &self.camera,
+                .pixels = pixels,
+                .cam = &self.scene.camera,
                 .world = &world_bvh,
                 .height = c_height,
                 .width = c_width,
@@ -123,7 +134,7 @@ pub const Raytracer = struct {
         }
 
         task_node.end();
-        root_node.setCompletedItems(1);
+        root_node.setCompletedItems(2);
 
         var render_node = root_node.start("Rendering", num_chunks);
 
@@ -154,16 +165,19 @@ pub const Raytracer = struct {
                         const node_msg = try std.fmt.allocPrint(self.allocator, "Render Thread #{}", .{i});
                         defer self.allocator.free(node_msg);
                         try nodes.append(render_node.start(node_msg, num_chunks / num_threads));
-                        root_node.setCompletedItems(1);
+                        root_node.setCompletedItems(3);
+                        // completed_chunks -= if (completed_chunks == 0) 0 else 1;
 
                         i += 1;
-                        break :blk i;
+                        std.debug.assert(i <= num_threads);
+                        break :blk i - 1;
                     };
                     nodes.items[idx].completeOne();
 
+                    // if (i == 1) continue;
                     completed_chunks += 1;
                     render_node.setCompletedItems(completed_chunks);
-                    // if (completed_chunks % self.thread_pool.threads.len == 0) try self.camera.image.writeToFilePath("./out/out.png", .{ .png = .{} });
+                    if (completed_chunks % self.thread_pool.threads.len == 0) try self.scene.camera.image.writeToFilePath("./out/out.png", .{ .png = .{} });
                 } else if (!task_done) {
                     done = false;
                 }
@@ -172,10 +186,27 @@ pub const Raytracer = struct {
             if (done or !self.thread_pool.is_running) break;
         }
 
-        render_node.end();
-        root_node.setCompletedItems(3);
+        std.debug.assert(completed_chunks == num_chunks);
+        log.info("Rendering done!", .{});
 
-        return self.camera.image;
+        render_node.end();
+        root_node.setCompletedItems(4);
+
+        var image_node = root_node.start("Creating Image", 0);
+        defer image_node.end();
+
+        for (pixels, 0..) |pix, p| {
+            const y = p / self.scene.camera.image_width;
+            const x = p % self.scene.camera.image_width;
+            if (pix[0] < 0 or pix[1] < 0 or pix[2] < 0) {
+                // std.log.debug("wrong ({}, {}) {}", .{ x, y, pix });
+                try self.scene.camera.setPixel(x, y, zigimg.color.Rgba32.initRgb(255, 0, 0));
+                continue;
+            }
+            self.scene.camera.setPixel(x, y, vecToRgba(pix, self.scene.camera.samples_per_pixel_v)) catch continue;
+        }
+
+        return self.scene.camera.image;
     }
 };
 
@@ -183,4 +214,23 @@ pub fn renderThread(ctx: tracer.Context, task: *TaskTracker) void {
     defer task.done.store(true, .release);
     task.thread_id = std.Thread.getCurrentId();
     tracer.trace(ctx);
+}
+
+const zero = zmath.f32x4s(0.0);
+const nearly_one = zmath.f32x4s(0.999);
+const v256 = zmath.f32x4s(256);
+
+inline fn vecToRgba(v: zmath.Vec, samples_per_pixel: zmath.Vec) zigimg.color.Rgba32 {
+    const rgba = zmath.clampFast(
+        @sqrt(v / samples_per_pixel),
+        zero,
+        nearly_one,
+    ) * v256; // linear to gamma
+
+    return zigimg.color.Rgba32.initRgba(
+        @intFromFloat(rgba[0]),
+        @intFromFloat(rgba[1]),
+        @intFromFloat(rgba[2]),
+        @intFromFloat(rgba[3]),
+    );
 }

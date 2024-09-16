@@ -60,18 +60,18 @@ fn IntInterval(comptime T: type) type {
             pub fn next(self: *Iterator) ?T {
                 self.current += 1;
                 if (self.current < self.interval.max or (self.current == self.interval.max and self.upper_boundry == .inclusive)) {
-                    return self.current;
+                    return self.current - 1;
                 } else return null;
             }
 
             pub fn nextInc(self: *Iterator) ?T {
                 self.current += 1;
-                return if (self.current <= self.interval.max) self.current else null;
+                return if (self.current <= self.interval.max) self.current - 1 else null;
             }
 
             pub fn nextExc(self: *Iterator) ?T {
                 self.current += 1;
-                return if (self.current < self.interval.max) self.current else null;
+                return if (self.current < self.interval.max) self.current - 1 else null;
             }
         };
 

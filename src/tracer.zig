@@ -18,6 +18,7 @@ const IntervalF32 = interval.IntervalF32;
 const log = std.log.scoped(.tracer);
 
 pub const Context = struct {
+    pixels: []zm.Vec,
     cam: *Camera,
     world: *BVH,
     height: IntervalUsize,
@@ -29,17 +30,19 @@ const black = zm.f32x4(0, 0, 0, 1.0);
 
 pub fn rayColor(r: *Ray, world: *BVH, depth: usize) zm.Vec {
     @setFloatMode(.optimized);
-    if (depth == 0) return black;
+    if (depth == 0) return backgroundColor(r);
 
     if (world.hit(r, .{ .min = 0.001, .max = std.math.inf(f32) })) |rec| {
-        var attenuation = white;
-        if (rec.mat.scatter(r, @constCast(&rec), &attenuation)) |new_r| {
+        var attenuation = zm.f32x4s(1.0);
+        if (rec.mat.scatter(r, &rec, &attenuation)) |new_r| {
             return attenuation * rayColor(@constCast(&new_r), world, depth - 1);
         }
-
-        return black;
     }
 
+    return backgroundColor(r);
+}
+
+fn backgroundColor(r: *Ray) zm.Vec {
     const unit_direction = zm.normalize3(r.dir);
     const a = 0.5 * (unit_direction[1] + 1.0);
     return zm.f32x4s(1.0 - a) * zm.f32x4s(1.0) + zm.f32x4s(a) * zm.f32x4(0.5, 0.7, 1.0, 1.0);
@@ -51,7 +54,7 @@ pub fn trace(ctx: Context) void {
         if (j >= ctx.cam.image_height) break;
 
         var width_iter = ctx.width.iter();
-        while (width_iter.nextExc()) |i| {
+        while (width_iter.nextExc()) |i| inner: {
             var col = zm.f32x4(0.0, 0.0, 0.0, 1.0);
 
             for (0..ctx.cam.samples_per_pixel) |_| {
@@ -59,10 +62,10 @@ pub fn trace(ctx: Context) void {
                 col += rayColor(&ray, ctx.world, ctx.cam.max_depth);
             }
 
-            ctx.cam.setPixel(i, j, vecToRgba(
-                col,
-                ctx.cam.samples_per_pixel_v,
-            )) catch break;
+            setPixel(ctx.pixels, ctx.cam, i, j, col) catch {
+                log.err("Trying to set a pixel out of bounds ({}, {})", .{ i, j });
+                break :inner;
+            };
         }
     }
 }
@@ -84,4 +87,11 @@ inline fn vecToRgba(v: zm.Vec, samples_per_pixel: zm.Vec) zigimg.color.Rgba32 {
         @intFromFloat(rgba[2]),
         @intFromFloat(rgba[3]),
     );
+}
+
+pub fn setPixel(pixels: []zm.Vec, cam: *Camera, x: usize, y: usize, c: zm.Vec) !void {
+    if (x >= cam.image_width or y >= cam.image_height) return error.OutOfBounds;
+    const i = x + cam.image_width * y;
+    pixels[i] = c;
+    try cam.setPixel(x, y, vecToRgba(c, cam.samples_per_pixel_v));
 }

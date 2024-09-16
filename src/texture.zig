@@ -1,8 +1,22 @@
+const std = @import("std");
 const zm = @import("zmath");
 
 pub const Texture = union(enum) {
     solid_color: SolidColor,
     checker_texture: CheckerTexture,
+
+    pub fn init(alloc: std.mem.Allocator, data: anytype) !*Texture {
+        const tex = try alloc.create(Texture);
+
+        switch (@TypeOf(data)) {
+            SolidColor => tex.* = .{ .solid_color = data },
+            CheckerTexture => tex.* = .{ .checker_texture = data },
+
+            else => @panic("Cannot infer Texture type of: " ++ @typeName(@TypeOf(data))),
+        }
+
+        return tex;
+    }
 
     pub fn value(self: *Texture, u: f32, v: f32, p: zm.Vec) zm.Vec {
         switch (self.*) {

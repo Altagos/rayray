@@ -26,28 +26,21 @@ pub const HitRecord = struct {
 };
 
 pub const Hittable = union(enum) {
-    sphere: struct { Sphere, []const u8 },
+    sphere: Sphere,
 
-    pub fn initSphere(name: []const u8, s: Sphere) Hittable {
-        // std.log.info("created sphere with mat: {}", .{s.mat});
-        return .{ .sphere = .{ s, name } };
+    pub fn initSphere(s: Sphere) Hittable {
+        return .{ .sphere = s };
     }
 
     pub fn boundingBox(self: *Hittable) AABB {
         switch (self.*) {
-            inline else => |*n| return n[0].bbox,
-        }
-    }
-
-    pub fn getName(self: *Hittable) []const u8 {
-        switch (self.*) {
-            .sphere => |*s| return s[1],
+            inline else => |*n| return n.bbox,
         }
     }
 
     pub fn hit(self: *const Hittable, r: *Ray, ray_t: IntervalF32) ?HitRecord {
         switch (self.*) {
-            inline else => |*n| return n[0].hit(r, ray_t),
+            inline else => |*n| return n.hit(r, ray_t),
         }
     }
 };

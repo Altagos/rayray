@@ -1,4 +1,5 @@
 const math = @import("std").math;
+const mem = @import("std").mem;
 
 const zm = @import("zmath");
 
@@ -7,10 +8,37 @@ const Ray = @import("Ray.zig");
 const util = @import("util.zig");
 const texture = @import("texture.zig");
 
-pub const Material = union(enum) {
+pub const MaterialType = enum {
+    lambertian,
+    metal,
+    dielectric,
+    textured,
+};
+
+pub const Material = union(MaterialType) {
     lambertian: Lambertian,
     metal: Metal,
     dielectric: Dielectric,
+    textured: Textured,
+
+    pub fn init(alloc: mem.Allocator, data: anytype) !*Material {
+        const material = try alloc.create(Material);
+
+        switch (@TypeOf(data)) {
+            Metal => material.* = .{ .metal = data },
+            Dielectric => material.* = .{ .dielectric = data },
+
+            Lambertian => material.* = .{ .lambertian = data },
+            zm.Vec => material.* = .{ .lambertian = .{ .albedo = data } },
+
+            Textured => material.* = .{ .textured = data },
+            *texture.Texture => material.* = .{ .textured = .{ .tex = data } },
+
+            else => @panic("Cannot infer Material type of: " ++ @typeName(@TypeOf(data))),
+        }
+
+        return material;
+    }
 
     pub fn initLambertian(tex: texture.Texture) Material {
         return .{ .lambertian = .{ .tex = tex } };
@@ -28,25 +56,35 @@ pub const Material = union(enum) {
         return .{ .dielectric = .{ .refraction_index = refraction_index } };
     }
 
-    pub inline fn scatter(self: *Material, r: *Ray, rec: *hittable.HitRecord, attenuation: *zm.Vec) ?Ray {
+    pub inline fn scatter(self: *Material, r: *Ray, rec: *const hittable.HitRecord, attenuation: *zm.Vec) ?Ray {
         return switch (self.*) {
-            .lambertian => |*lambert| lambert.scatter(r, rec, attenuation),
-            .metal => |*met| met.scatter(r, rec, attenuation),
-            .dielectric => |*die| die.scatter(r, rec, attenuation),
+            inline else => |*n| n.scatter(r, rec, attenuation),
         };
     }
 };
 
 pub const Lambertian = struct {
-    tex: texture.Texture,
+    albedo: zm.Vec,
 
-    pub inline fn scatter(self: *Lambertian, r: *Ray, rec: *hittable.HitRecord, attenuation: *zm.Vec) ?Ray {
+    pub inline fn scatter(self: *Lambertian, r: *Ray, rec: *const hittable.HitRecord, attenuation: *zm.Vec) ?Ray {
+        var scatter_dir = rec.normal + util.randomUnitVec();
+
+        if (util.nearZero(scatter_dir)) scatter_dir = rec.normal;
+
+        attenuation.* = self.albedo;
+        return Ray{ .orig = rec.p, .dir = scatter_dir, .tm = r.tm };
+    }
+};
+
+pub const Textured = struct {
+    tex: *texture.Texture,
+
+    pub inline fn scatter(self: *Textured, r: *Ray, rec: *const hittable.HitRecord, attenuation: *zm.Vec) ?Ray {
         var scatter_dir = rec.normal + util.randomUnitVec();
 
         if (util.nearZero(scatter_dir)) scatter_dir = rec.normal;
 
         attenuation.* = self.tex.value(rec.u, rec.v, rec.p);
-        // return Ray.initT(rec.p, scatter_dir, r.tm);
         return Ray{ .orig = rec.p, .dir = scatter_dir, .tm = r.tm };
     }
 };
@@ -56,7 +94,11 @@ pub const Metal = struct {
     /// fuzz < 1
     fuzz: f32,
 
-    pub inline fn scatter(self: *Metal, r: *Ray, rec: *hittable.HitRecord, attenuation: *zm.Vec) ?Ray {
+    pub fn init(albedo: zm.Vec, fuzz: f32) Metal {
+        return .{ .albedo = albedo, .fuzz = if (fuzz < 1) fuzz else 1.0 };
+    }
+
+    pub inline fn scatter(self: *Metal, r: *Ray, rec: *const hittable.HitRecord, attenuation: *zm.Vec) ?Ray {
         const reflected = util.reflect(r.dir, rec.normal);
         const scattered = Ray.initT(rec.p, zm.normalize3(reflected) + zm.f32x4s(self.fuzz) * util.randomUnitVec(), r.tm);
         attenuation.* = self.albedo;
@@ -67,7 +109,7 @@ pub const Metal = struct {
 pub const Dielectric = struct {
     refraction_index: f32,
 
-    pub fn scatter(self: *Dielectric, r: *Ray, rec: *hittable.HitRecord, attenuation: *zm.Vec) ?Ray {
+    pub fn scatter(self: *Dielectric, r: *Ray, rec: *const hittable.HitRecord, attenuation: *zm.Vec) ?Ray {
         attenuation.* = zm.f32x4s(1.0);
         const ri = if (rec.front_face) (1.0 / self.refraction_index) else self.refraction_index;
 
@@ -81,7 +123,6 @@ pub const Dielectric = struct {
         else
             util.refract(unit_direction, rec.normal, ri);
 
-        // return Ray.initT(rec.p, direction, r.tm);
         return Ray{ .orig = rec.p, .dir = direction, .tm = r.tm };
     }
 

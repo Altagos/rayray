@@ -9,7 +9,7 @@ const Material = rayray.material.Material;
 const Sphere = rayray.hittable.Sphere;
 const zm = rayray.zmath;
 
-const scences = @import("scences.zig");
+const scenes = @import("scenes.zig");
 
 pub const std_options = .{
     .log_level = .debug,
@@ -21,14 +21,24 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
+    // var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    // const allocator = gpa.allocator();
+    // defer {
+    //     const deinit_status = gpa.deinit();
+    //     //fail test; can't try in defer as defer is executed after we return
+    //     if (deinit_status == .leak) @panic("LEAK");
+    // }
+
     // Setting up the world
-    var scence = try scences.checker(allocator);
-    defer scence.deinit();
+    var scene = rayray.Scene.init(allocator);
+    defer scene.deinit();
+
+    try scenes.inOneWeekend(&scene);
 
     std.log.info("World created", .{});
 
     // Raytracing part
-    var raytracer = try rayray.Raytracer.init(allocator, scence.world, scence.camera);
+    var raytracer = try rayray.Raytracer.init(allocator, scene);
     defer raytracer.deinit();
 
     var timer = try std.time.Timer.start();
