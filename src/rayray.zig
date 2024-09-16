@@ -31,7 +31,7 @@ pub const Raytracer = struct {
     thread_pool: *std.Thread.Pool,
 
     camera: Camera,
-    world: BVH,
+    world: hittable.HittableList,
 
     pub fn init(allocator: std.mem.Allocator, world: hittable.HittableList, camera_opts: Camera.Options) !Self {
         var thread_pool = try allocator.create(std.Thread.Pool);
@@ -41,7 +41,7 @@ pub const Raytracer = struct {
             .allocator = allocator,
             .thread_pool = thread_pool,
             .camera = try Camera.init(allocator, camera_opts),
-            .world = try BVH.init(allocator, world, build_options.max_depth),
+            .world = world,
         };
     }
 
@@ -85,6 +85,20 @@ pub const Raytracer = struct {
             num_threads,
         });
 
+        var root_node = std.Progress.start(.{
+            .root_name = "Ray Tracer",
+            .estimated_total_items = 3,
+        });
+
+        var bvh_node = root_node.start("Createing BVH", 0);
+
+        var world_bvh = try BVH.init(self.allocator, self.world, build_options.max_depth);
+
+        bvh_node.end();
+        root_node.setCompletedItems(0);
+
+        var task_node = root_node.start("Creating render tasks", 0);
+
         const tasks = try self.allocator.alloc(TaskTracker, num_chunks);
         defer self.allocator.free(tasks);
 
@@ -97,40 +111,27 @@ pub const Raytracer = struct {
 
             const ctx = tracer.Context{
                 .cam = &self.camera,
-                .world = &self.world,
+                .world = &world_bvh,
                 .height = c_height,
                 .width = c_width,
             };
 
             try self.thread_pool.spawn(
                 renderThread,
-                .{ ctx, t, id },
+                .{ ctx, t },
             );
         }
 
-        // const stderr = std.io.getStdErr();
+        task_node.end();
+        root_node.setCompletedItems(1);
 
-        // var progress = std.Progress{
-        //     .terminal = stderr,
-        //     .supports_ansi_escape_codes = true,
-        // };
-        // var node = progress.start("Rendered Chunks", num_chunks);
-        // node.setCompletedItems(0);
-        // node.context.refresh();
+        var render_node = root_node.start("Rendering", num_chunks);
 
         var thread_to_idx = std.ArrayList(std.Thread.Id).init(self.allocator);
         defer thread_to_idx.deinit();
 
-        var root_node = std.Progress.start(.{
-            .root_name = "Ray Tracer",
-            .estimated_total_items = num_chunks,
-        });
         var nodes = std.ArrayList(std.Progress.Node).init(self.allocator);
         defer nodes.deinit();
-
-        for (0..num_threads) |_| {
-            try nodes.append(root_node.start("Chunks Rendered", num_chunks / num_threads));
-        }
 
         var completed_chunks: u64 = 0;
         var i: usize = 0;
@@ -147,15 +148,21 @@ pub const Raytracer = struct {
                         for (thread_to_idx.items, 0..) |value, idx| {
                             if (value == t.thread_id) break :blk idx;
                         }
+
                         try thread_to_idx.append(t.thread_id);
-                        const idx = i;
+
+                        const node_msg = try std.fmt.allocPrint(self.allocator, "Render Thread #{}", .{i});
+                        defer self.allocator.free(node_msg);
+                        try nodes.append(render_node.start(node_msg, num_chunks / num_threads));
+                        root_node.setCompletedItems(1);
+
                         i += 1;
-                        break :blk idx;
+                        break :blk i;
                     };
                     nodes.items[idx].completeOne();
 
                     completed_chunks += 1;
-                    root_node.setCompletedItems(completed_chunks);
+                    render_node.setCompletedItems(completed_chunks);
                     // if (completed_chunks % self.thread_pool.threads.len == 0) try self.camera.image.writeToFilePath("./out/out.png", .{ .png = .{} });
                 } else if (!task_done) {
                     done = false;
@@ -165,15 +172,15 @@ pub const Raytracer = struct {
             if (done or !self.thread_pool.is_running) break;
         }
 
-        // node.end();
+        render_node.end();
+        root_node.setCompletedItems(3);
 
         return self.camera.image;
     }
 };
 
-pub fn renderThread(ctx: tracer.Context, task: *TaskTracker, id: usize) void {
+pub fn renderThread(ctx: tracer.Context, task: *TaskTracker) void {
     defer task.done.store(true, .release);
     task.thread_id = std.Thread.getCurrentId();
-    _ = id;
     tracer.trace(ctx);
 }
