@@ -79,8 +79,8 @@ pub fn scene(s: *Scene) !void {
 
     try s.setCamera(.{
         .aspect_ratio = 16.0 / 9.0,
-        .image_width = 600,
-        .samples_per_pixel = 50,
+        .image_width = 1200,
+        .samples_per_pixel = 500,
         .max_depth = 50,
 
         .vfov = 20,
