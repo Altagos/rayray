@@ -155,7 +155,7 @@ pub fn deinit(self: *Camera) void {
     self.image.deinit();
 }
 
-pub fn getRay(self: *Camera, i: usize, j: usize) Ray {
+pub fn getRay(self: *const Camera, i: usize, j: usize) Ray {
     const offset = sampleSquare();
     const pixel_sample = self.pixel00_loc +
         (zm.f32x4s(@as(f32, @floatFromInt(i)) + offset[0]) * self.pixel_delta_u) +
@@ -172,7 +172,7 @@ fn sampleSquare() zm.Vec {
     return zm.f32x4(util.randomF32() - 0.5, util.randomF32() - 0.5, 0, 0);
 }
 
-fn defocusDiskSample(self: *Camera) zm.Vec {
+fn defocusDiskSample(self: *const Camera) zm.Vec {
     const p = util.randomInUnitDisk();
     return self.center + (zm.f32x4s(p[0]) * self.defocus_disk_u) + (zm.f32x4s(p[1]) * self.defocus_disk_v);
 }
@@ -183,7 +183,7 @@ pub fn setPixel(self: *Camera, x: usize, y: usize, c: color.Rgba32) !void {
     self.image.pixels.rgba32[i] = c;
 }
 
-fn pixelSamplesSq(self: *Camera) zm.Vec {
+fn pixelSamplesSq(self: *const Camera) zm.Vec {
     const px = zm.f32x4s(-0.5 + random.float(f32));
     const py = zm.f32x4s(-0.5 + random.float(f32));
     return (px * self.pixel_delta_u) + (py * self.pixel_delta_v);

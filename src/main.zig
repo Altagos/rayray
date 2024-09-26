@@ -1,4 +1,5 @@
 const std = @import("std");
+const Options = std.Options;
 
 const aa = @import("a");
 
@@ -11,7 +12,7 @@ const zm = rayray.zmath;
 
 const scenes = @import("scenes.zig");
 
-pub const std_options = .{
+pub const std_options = Options{
     .log_level = .debug,
     .logFn = aa.log.logFn,
 };
@@ -33,7 +34,7 @@ pub fn main() !void {
     var scene = rayray.Scene.init(allocator);
     defer scene.deinit();
 
-    try scenes.inOneWeekend(&scene);
+    try scenes.checker(&scene);
 
     std.log.info("World created", .{});
 

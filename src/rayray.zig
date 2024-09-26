@@ -119,7 +119,11 @@ pub const Raytracer = struct {
             const c_height = IntervalUsize{ .min = row, .max = row + chunk_height };
             const c_width = IntervalUsize{ .min = col, .max = col + chunk_width + 1 };
 
-            const ctx = tracer.Context{
+            const ctx = try self.allocator.create(tracer.Context);
+
+            // FIXME: might cause the segfault
+            // possible fix: pass a pointer to the context as argument (create via allocator)
+            ctx.* = tracer.Context{
                 .pixels = pixels,
                 .cam = &self.scene.camera,
                 .world = &world_bvh,
@@ -210,7 +214,7 @@ pub const Raytracer = struct {
     }
 };
 
-pub fn renderThread(ctx: tracer.Context, task: *TaskTracker) void {
+pub fn renderThread(ctx: *tracer.Context, task: *TaskTracker) void {
     defer task.done.store(true, .release);
     task.thread_id = std.Thread.getCurrentId();
     tracer.trace(ctx);

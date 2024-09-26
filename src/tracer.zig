@@ -19,8 +19,8 @@ const log = std.log.scoped(.tracer);
 
 pub const Context = struct {
     pixels: []zm.Vec,
-    cam: *Camera,
-    world: *BVH,
+    cam: *const Camera,
+    world: *const BVH,
     height: IntervalUsize,
     width: IntervalUsize,
 };
@@ -28,7 +28,7 @@ pub const Context = struct {
 const white = zm.f32x4s(1.0);
 const black = zm.f32x4(0, 0, 0, 1.0);
 
-pub fn rayColor(r: *Ray, world: *BVH, depth: usize) zm.Vec {
+pub fn rayColor(r: *Ray, world: *const BVH, depth: usize) zm.Vec {
     @setFloatMode(.optimized);
     if (depth == 0) return backgroundColor(r);
 
@@ -48,7 +48,7 @@ fn backgroundColor(r: *Ray) zm.Vec {
     return zm.f32x4s(1.0 - a) * zm.f32x4s(1.0) + zm.f32x4s(a) * zm.f32x4(0.5, 0.7, 1.0, 1.0);
 }
 
-pub fn trace(ctx: Context) void {
+pub fn trace(ctx: *Context) void {
     var height_iter = ctx.height.iter();
     while (height_iter.nextInc()) |j| {
         if (j >= ctx.cam.image_height) break;
@@ -89,9 +89,9 @@ inline fn vecToRgba(v: zm.Vec, samples_per_pixel: zm.Vec) zigimg.color.Rgba32 {
     );
 }
 
-pub fn setPixel(pixels: []zm.Vec, cam: *Camera, x: usize, y: usize, c: zm.Vec) !void {
+pub fn setPixel(pixels: []zm.Vec, cam: *const Camera, x: usize, y: usize, c: zm.Vec) !void {
     if (x >= cam.image_width or y >= cam.image_height) return error.OutOfBounds;
     const i = x + cam.image_width * y;
     pixels[i] = c;
-    try cam.setPixel(x, y, vecToRgba(c, cam.samples_per_pixel_v));
+    // try cam.setPixel(x, y, vecToRgba(c, cam.samples_per_pixel_v));
 }

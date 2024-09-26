@@ -25,7 +25,7 @@ pub const Material = union(MaterialType) {
         const material = try alloc.create(Material);
 
         switch (@TypeOf(data)) {
-            Metal => material.* = .{ .metal = data },
+            Metal => material.* = @unionInit(Material, "metal", data),
             Dielectric => material.* = .{ .dielectric = data },
 
             Lambertian => material.* = .{ .lambertian = data },

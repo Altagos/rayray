@@ -155,7 +155,7 @@ pub fn deinit(self: *BVH) void {
     self.root.deinit(self.allocator);
 }
 
-pub inline fn hit(self: *BVH, r: *Ray, ray_t: IntervalF32) ?HitRecord {
+pub inline fn hit(self: *const BVH, r: *Ray, ray_t: IntervalF32) ?HitRecord {
     return self.root.hit(r, ray_t);
 }
 
