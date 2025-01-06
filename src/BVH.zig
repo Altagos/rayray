@@ -138,7 +138,7 @@ root: *Node,
 
 pub fn init(allocator: std.mem.Allocator, objects: hittable.HittableList, max_depth: usize) !BVH {
     defer @constCast(&objects).deinit();
-    log.info("Creating BVH Tree with {} objects", .{objects.list.items.len});
+    log.debug("Creating BVH Tree with {} objects", .{objects.list.items.len});
 
     const root = try allocator.create(Node);
     try root.init(allocator, objects.list.items, max_depth, 0);
