@@ -98,7 +98,7 @@ pub const Raytracer = struct {
 
         var create_pixels_node = root_node.start("Create pixel array", 0);
 
-        const pixels = try self.allocator.alloc(zmath.Vec, self.scene.camera.image_height * self.scene.camera.image_width);
+        const pixels: []zmath.Vec = try self.allocator.alloc(zmath.Vec, self.scene.camera.image_height * self.scene.camera.image_width);
         defer self.allocator.free(pixels);
         // const l = pixels.ptr;
 
@@ -107,7 +107,7 @@ pub const Raytracer = struct {
 
         var task_node = root_node.start("Creating render tasks", 0);
 
-        const tasks = try self.allocator.alloc(TaskTracker, num_chunks);
+        const tasks: []TaskTracker = try self.allocator.alloc(TaskTracker, num_chunks);
         defer self.allocator.free(tasks);
 
         for (tasks, 0..) |*t, id| {
@@ -121,8 +121,6 @@ pub const Raytracer = struct {
 
             const ctx = try self.allocator.create(tracer.Context);
 
-            // FIXME: might cause the segfault
-            // possible fix: pass a pointer to the context as argument (create via allocator)
             ctx.* = tracer.Context{
                 .pixels = pixels,
                 .cam = &self.scene.camera,
