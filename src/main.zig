@@ -10,6 +10,8 @@ const Material = rayray.material.Material;
 const Sphere = rayray.hittable.Sphere;
 const zm = rayray.zmath;
 
+const build_options = rayray.build_options;
+
 const scenes = @import("scenes.zig");
 
 pub const std_options = Options{
@@ -48,8 +50,8 @@ pub fn main() !void {
 
     printRenderTime(timer.lap());
 
-    try img.writeToFilePath("./out/out.png", .{ .png = .{} });
-    std.log.info("Image saved to: ./out/out.png", .{});
+    try img.writeToFilePath(build_options.output, .{ .png = .{} });
+    std.log.info("Image saved to: {s}", .{build_options.output});
 }
 
 fn printRenderTime(t: u64) void {

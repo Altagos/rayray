@@ -10,6 +10,15 @@ pub fn build(b: *std.Build) void {
     const max_depth = b.option(u64, "max-depth", "Set the max depth of the BVH tree") orelse std.math.maxInt(u64);
     options.addOption(u64, "max_depth", max_depth);
 
+    const save_during_render = b.option(bool, "save-during-render", "Save image during the render process") orelse false;
+    options.addOption(bool, "save_during_render", save_during_render);
+
+    const output_file: std.Build.LazyPath = b.option(std.Build.LazyPath, "output", "File to save rendered image to") orelse {
+        std.log.err("Please specify a save file location", .{});
+        return;
+    };
+    options.addOption([]const u8, "output", output_file.getPath(b));
+
     const rayray = b.addModule("rayray", .{
         .root_source_file = b.path("src/rayray.zig"),
         .target = target,

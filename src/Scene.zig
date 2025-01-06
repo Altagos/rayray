@@ -1,5 +1,7 @@
 const std = @import("std");
 
+const zigimg = @import("zigimg");
+
 const Camera = @import("Camera.zig");
 const hittable = @import("hittable.zig");
 const Material = @import("material.zig").Material;
@@ -54,4 +56,8 @@ pub fn createTexture(self: *Self, tex: anytype) !*Texture {
 
 pub fn setCamera(self: *Self, cam: Camera.Options) !void {
     self.camera = try Camera.init(self.allocator, cam);
+}
+
+pub fn writeToFilePath(self: *Self, path: []const u8, opts: zigimg.Image.EncoderOptions) !void {
+    try self.camera.image.writeToFilePath(path, opts);
 }
